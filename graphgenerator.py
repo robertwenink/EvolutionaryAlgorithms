@@ -32,7 +32,7 @@ class GraphGenerator:
         f.close()
 
     @staticmethod
-    def generateHyperplane(length, width, maxWeight, edgeProb=1, problemId='', options=''):
+    def generateHyperplane(length, width, maxWeight, edgeProb=1, problemId='', hyperplane='grid'):
         '''
         Generates hyperplane in shape of grid
         set options to 'tunnel' or 'donut' for curved hyperplane
@@ -50,14 +50,17 @@ class GraphGenerator:
         if maxWeight < 0:
             print('Please provide positive numbers as arguments')
             return
+
+        if hyperplane not in ['grid', 'tunnel', 'donut']:
+            print('Options must be "grid", "tunnel" or "donut"')
+            return
         
         rand = Random()
 
-        filename = f'maxcut_grid_{length}x{width}_{edgeProb}_{maxWeight}'
+        filename = f'maxcut_{length}x{width}_{edgeProb}_{maxWeight}'
         if problemId != '':
             filename += f'_instance_{problemId}'
-        if options != '':
-            filename += f'_{options}'
+        filename += f'_{hyperplane}'
 
         with open(filename, "w") as f:
             for x in range(width):
@@ -75,13 +78,13 @@ class GraphGenerator:
                         bottom_node = x * length + y - 1
                         f.write(f'{bottom_node} {node} {weigth}\n')
                     
-                    if options == 'tunnel' or options == 'donut':
+                    if hyperplane == 'tunnel' or hyperplane == 'donut':
                         if x == 0 and rand.random() < edgeProb:
                             weigth = int(rand.random() * maxWeight + 1)
                             left_node = (width - 1) * length + y
                             f.write(f'{left_node} {node} {weigth}\n')
 
-                        if options == 'donut':
+                        if hyperplane == 'donut':
                             if y == 0 and rand.random() < edgeProb:
                                 weigth = int(rand.random() * maxWeight + 1)
                                 bottom_node = x * length + (length - 1)
