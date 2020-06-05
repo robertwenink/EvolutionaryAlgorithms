@@ -63,6 +63,7 @@ class GraphGenerator:
         filename += f'_{hyperplane}'
 
         with open(filename, "w") as f:
+            f.write(f'{width*length}\n')
             for x in range(width):
                 for y in range(length):
 

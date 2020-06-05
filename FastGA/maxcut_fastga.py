@@ -2,8 +2,6 @@ from fastga import FastMutationOperator
 import copy
 from random import randint
 
-
-
 def fitness(bit_string):
     cut = 0
 
@@ -25,11 +23,9 @@ def max_fitness(population):
     return max_fitness
 
 # Loading single instance
-E = []
-with open('instances/maxcut_60_05_40_instance_160.txt','r') as f:
-    size = int(f.readline())
-    for i in range(size):
-        E.append(f.readline().split())
+with open('maxcut_grid_4x4_1_1_donut','r') as f:
+    size = int(next(f))
+    E = [line.split() for line in f]
 
 
 # INITIALIZATION: TODO: Horrible, horrible code
