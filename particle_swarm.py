@@ -1,5 +1,6 @@
 import numpy as np
 
+'https://towardsdatascience.com/nature-inspired-optimization-algorithms-particle-swarm-optimization-2cd207d0d37e'
 
 def error(current_pos):
     x = current_pos[0]
