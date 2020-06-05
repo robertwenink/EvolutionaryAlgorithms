@@ -23,15 +23,14 @@ def max_fitness(population):
     return max_fitness
 
 # Loading single instance
-with open('maxcut_grid_4x4_1_1_donut','r') as f:
+with open('maxcut_4x4_1_1_donut','r') as f:
     size = int(next(f))
     E = [line.split() for line in f]
-
 
 # INITIALIZATION: TODO: Horrible, horrible code
 pop_size = 20
 population = []
-max_generations = 100
+max_generations = 30
 form = '{0:0' + str(size) + 'b}'
 for i in range(pop_size):
     bit_string = form.format(randint(0, 2**10))
