@@ -22,6 +22,7 @@ class GraphGenerator:
         filename =  f'{directory}/maxcut_random_{nodes}_{edgeProb}_{maxWeight}' if problemId == '' else f'maxcut_random_{nodes}_{edgeProb}_{maxWeight}_instance_{problemId}'
         
         with open(filename, "w") as f:
+            f.write(f'{nodes}\n')
             for n1 in range(nodes):
                 for n2 in range(nodes):
                     if n1 == n2:

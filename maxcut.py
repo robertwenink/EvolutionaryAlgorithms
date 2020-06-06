@@ -17,11 +17,12 @@ class MaxCut:
         self.length_genotypes = 0
 
         with open(instances_directory + filename, "r") as f:
+            nodes = int(f.readline())
             lines = f.readlines()
 
-            self.length_genotypes = len(lines)
+            self.length_genotypes = nodes
             # Faster numpy array for speedy fitness checking
-            self.fast_fit = np.zeros((self.length_genotypes))
+            self.fast_fit = np.zeros((nodes, nodes))
 
             for i, line in enumerate(lines):
                 edge = line.split()
@@ -37,7 +38,7 @@ class MaxCut:
 
                 self.edges_list.append(tuple([node_1, node_2, weight]))
 
-                self.fast_fit[i] = weight
+                self.fast_fit[node_1][node_2] = weight
 
         if os.path.exists(opt_directory + filename):
             with open(opt_directory + filename, "r") as f2:
@@ -55,7 +56,7 @@ class MaxCut:
 
         '''
 
-        return np.sum(genotype * self.fast_fit)
+        return np.dot(genotype, np.matmul(self.fast_fit, genotype == 0))
 
 
     def np_generate_random_genotype(self):
@@ -64,7 +65,7 @@ class MaxCut:
         Ouput: random numpy array of bits
 
         '''
-        return np.random.rand(2, size=self.length_genotypes)
+        return np.random.randint(2, size=self.length_genotypes)
 
     def brute_force_opt(self):
         '''
