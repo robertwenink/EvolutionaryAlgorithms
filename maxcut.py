@@ -1,11 +1,12 @@
 import numpy as np
+import os
 
 class MaxCut:
 
-    def __init__(self, filename):
+    def __init__(self, filename, instances_directory, opt_directory, calc_opt=False):
         '''
         initialize MaxCut problem from filename \n
-        param create_reverse_edges : if True duplicates edges for reverse
+        param file : file containing problem instance
 
         '''
 
@@ -15,7 +16,7 @@ class MaxCut:
 
         self.length_genotypes = 0
 
-        with open(filename, "r") as f:
+        with open(instances_directory + filename, "r") as f:
             lines = f.readlines()
 
             self.length_genotypes = len(lines)
@@ -24,18 +25,27 @@ class MaxCut:
 
             for i, line in enumerate(lines):
                 edge = line.split()
-                node_1, node_2, weight = edge[0], edge[1], edge[2]
+                weight = int(edge[2])
+                edge = sorted(edge[:2])
+                node_1, node_2 = int(edge[0]), int(edge[1])
 
                 if node_1 not in self.edges_dict:
                     self.edges_dict[node_1] = {}
                 self.edges_dict[node_1][node_2] = weight
 
-                self.edges_tuples[tuple(sorted([node_1, node_2]))] = weight
+                self.edges_tuples[tuple([node_1, node_2])] = weight
 
-                self.edges_list.append(tuple(node_1, node_2, weight))
+                self.edges_list.append(tuple([node_1, node_2, weight]))
 
                 self.fast_fit[i] = weight
 
+        if os.path.exists(opt_directory + filename):
+            with open(opt_directory + filename, "r") as f2:
+                self.opt = int(f2.readline())
+        elif calc_opt:
+            self.opt = self.brute_force_opt()
+            with open(opt_directory + filename, "w") as f2:
+                f2.write(str(self.opt))
 
     def np_fitness(self, genotype):
         '''
@@ -64,3 +74,4 @@ class MaxCut:
         '''
         # TODO:
         # look online for brute force solver of MaxCut problem?
+        return -1
