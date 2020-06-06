@@ -8,11 +8,6 @@ class BinaryParticleSwarmOptimization:
 
         '''
 
-        # Constants
-        self.w = 0.729
-        self.c1 = 1.49445
-        self.c2 = 1.49445
-
         # fitness function 
         self.calculate_fitness = instance.np_fitness
 
@@ -49,8 +44,8 @@ class BinaryParticleSwarmOptimization:
         '''
         phi_1 = np.random.rand()
         phi_2 = np.random.rand()
-        return self.w * particle.velocity + self.c1 * phi_1 * (particle.best_position_particle - particle.position) + \
-                    self.c2 * phi_2 * (self.best_position_swarm - particle.position)
+        return particle.velocity + phi_1 * (particle.best_position_particle - particle.position) + \
+                    phi_2 * (self.best_position_swarm - particle.position)
 
 
     def sigmoid(self, arr):
@@ -74,18 +69,14 @@ class BinaryParticleSwarmOptimization:
                 new_velocity = self.calculate_velocity(particle)
 
                 # calculate new position
-                rand = np.random.rand()
-                sigm = self.sigmoid(new_velocity)
-                new_position = (rand < sigm).astype(np.int64)
+                rand = np.random.uniform(low=0, high=1, size=len(particle.position))
+                new_position = (rand < self.sigmoid(new_velocity)).astype(np.int64)
                 
                 # update velocity and position
                 particle.update(new_position, new_velocity)
 
-                # if i % 10 == 0 and epoch % 5 == 0:
-                #     print(f'{rand}\n{sigm}\n{new_position}')
-
-
-            print(f'Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
+            if epoch % 50 == 0:
+                print(f'Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
 
 class Particle:
     '''

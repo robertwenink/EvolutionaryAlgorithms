@@ -75,7 +75,7 @@ class MaxCut:
 
         # Normalize objectives
         # objective = objective / float(self.opt)
-        return objective
+        return np.int64(objective)
 
 
     def np_generate_random_genotype(self):

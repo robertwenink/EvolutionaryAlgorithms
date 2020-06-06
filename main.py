@@ -1,4 +1,5 @@
 import os
+from time import time
 from maxcut import MaxCut
 from particle_swarm import BinaryParticleSwarmOptimization
 
@@ -13,8 +14,10 @@ def main(instances_directory, opt_directory, sub_directory):
         instance = MaxCut(f, instances_directory, opt_directory)
         instances.append(instance)
 
-    BPSO = BinaryParticleSwarmOptimization(instances[3], 50, 50)
+    BPSO = BinaryParticleSwarmOptimization(instances[3], 50, 2000)
+    t = time()
     BPSO.run()
+    print(f'{time() - t} seconds')
 
     # TODO
     # Call solvers
