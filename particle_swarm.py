@@ -1,76 +1,63 @@
+import numpy as np
 
-
-import operator
-import random
-
-import numpy
-
-from deap import base
-from deap import benchmarks
-from deap import creator
-from deap import tools
-
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Particle", numpy.ndarray, fitness=creator.FitnessMax, speed=list, 
-    smin=None, smax=None, best=None)
-
-def generate(size, pmin, pmax, smin, smax):
-    part = creator.Particle(numpy.random.uniform(pmin, pmax, size)) 
-    part.speed = numpy.random.uniform(smin, smax, size)
-    part.smin = smin
-    part.smax = smax
-    return part
-
-def updateParticle(part, best, phi1, phi2):
-    u1 = numpy.random.uniform(0, phi1, len(part))
-    u2 = numpy.random.uniform(0, phi2, len(part))
-    v_u1 = u1 * (part.best - part)
-    v_u2 = u2 * (best - part)
-    part.speed += v_u1 + v_u2
-    for i, speed in enumerate(part.speed):
-        if abs(speed) < part.smin:
-            part.speed[i] = math.copysign(part.smin, speed)
-        elif abs(speed) > part.smax:
-            part.speed[i] = math.copysign(part.smax, speed)
-    part += part.speed
-
-toolbox = base.Toolbox()
-toolbox.register("particle", generate, size=2, pmin=-6, pmax=6, smin=-3, smax=3)
-toolbox.register("population", tools.initRepeat, list, toolbox.particle)
-toolbox.register("update", updateParticle, phi1=2.0, phi2=2.0)
-toolbox.register("evaluate", benchmarks.h1)
-
-def main():
-    pop = toolbox.population(n=5)
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", numpy.mean)
-    stats.register("std", numpy.std)
-    stats.register("min", numpy.min)
-    stats.register("max", numpy.max)
-
-    logbook = tools.Logbook()
-    logbook.header = ["gen", "evals"] + stats.fields
-
-    GEN = 1000
-    best = None
-
-    for g in range(GEN):
-        for part in pop:
-            part.fitness.values = toolbox.evaluate(part)
-            if part.best is None or part.best.fitness < part.fitness:
-                part.best = creator.Particle(part)
-                part.best.fitness.values = part.fitness.values
-            if best is None or best.fitness < part.fitness:
-                best = creator.Particle(part)
-                best.fitness.values = part.fitness.values
-        for part in pop:
-            toolbox.update(part, best)
-
-        # Gather all the fitnesses in one list and print the stats
-        logbook.record(gen=g, evals=len(pop), **stats.compile(pop))
-        print(logbook.stream)
+class ParticleSwarmOptimization:
     
-    return pop, logbook, best
+    w = 0.729
+    c1 = 1.49445
+    c2 = 1.49445
+    lr = 0.01
 
-if __name__ == "__main__":
-    main()
+    def __init__(self, instance, numOfBoids, numOfEpochs):
+        self.instance = instance
+
+        self.swarm_list = [self.Particle(instance, self) for i in range(numOfBoids)]
+        self.numOfEpochs = numOfEpochs
+
+        self.best_swarm_position = np.random.uniform(low=-500, high=500, size=genes)
+        self.best_swarm_error = 1e80  # Set high value to best swarm error
+
+    class Particle:
+
+        def __init__(self, instance, swarm, genes):
+            self.instance = instance
+
+            self.position = np.random.randint(2, size=instance.length_genotypes)
+            self.velocity = np.random.uniform(2, size=instance.length_genotypes)
+            self.best_part_pos = self.position.copy()
+
+            self.error = error(self.position)
+            self.best_part_err = self.error.copy()
+
+        def setPos(self, pos):
+            self.position = pos
+            self.error = error(pos)
+            if self.error < self.best_part_err:
+                self.best_part_err = self.error
+                self.best_part_pos = pos
+
+    
+    def optimize(self):
+        for i in range(self.numOfEpochs):
+
+            for j in range(len(self.swarm_list)):
+
+                current_particle = self.swarm_list[j]  # get current particle
+
+                Vcurr = grad_error(current_particle.position)  # calculate current velocity of the particle
+
+                deltaV = self.w * Vcurr \
+                        + self.c1 * (current_particle.best_part_pos - current_particle.position) \
+                        + self.c2 * (self.best_swarm_position - current_particle.position)  # calculate delta V
+
+                new_position = self.swarm_list[j].position - self.lr * deltaV  # calculate the new position
+
+                self.swarm_list[j].setPos(new_position)  # update the position of particle
+
+                if error(new_position) < self.best_swarm_error:  # check the position if it's best for swarm
+                    self.best_swarm_position = new_position
+                    self.best_swarm_error = error(new_position)
+
+            print('Epoch: {0} | Best position: [{1},{2}] | Best known error: {3}'.format(i,
+                                                                                        self.best_swarm_position[0],
+                                                                                        self.best_swarm_position[1],
+                                                                                        self.best_swarm_error))

@@ -13,7 +13,7 @@ class GraphGenerator:
             print('Edge probability must by between 0 and 1')
             return
 
-        if maxWeight < 0 or problemId < 0:
+        if maxWeight < 0:
             print('Please provide positive numbers as arguments')
             return
 
@@ -93,4 +93,5 @@ class GraphGenerator:
                                 f.write(f'{bottom_node} {node} {weigth}\n')
         f.close()
 
-GraphGenerator.generateHyperplane(4, 4, 1, 1, '', 'donut')
+# GraphGenerator.generateHyperplane('instances', 2, 2, 1, 1, '', 'donut')
+GraphGenerator.generateRandomGraph('instances', 2, 1, 1, '')
