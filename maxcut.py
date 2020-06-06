@@ -55,3 +55,12 @@ class MaxCut:
 
         '''
         return np.random.rand(2, size=self.length_genotypes)
+
+    def brute_force_opt(self):
+        '''
+        Method for brute forcing the optimum calculation \n
+        Output: MaxCut problem solved
+
+        '''
+        # TODO:
+        # look online for brute force solver of MaxCut problem?
