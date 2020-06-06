@@ -40,6 +40,10 @@ class MaxCut:
 
                 self.fast_fit[node_1][node_2] = weight
 
+        ran = self.np_generate_random_genotype()
+        fi1 = self.np_fitness(ran)
+        fi2 = self.fitness(ran)
+
         if os.path.exists(opt_directory + filename):
             with open(opt_directory + filename, "r") as f2:
                 self.opt = int(f2.readline())
@@ -56,7 +60,25 @@ class MaxCut:
 
         '''
 
-        return np.dot(genotype, np.matmul(self.fast_fit, genotype == 0))
+        return np.dot(genotype, np.matmul(self.fast_fit, genotype == 0)) # / self.opt
+
+
+    def fitness(self, genotype):
+        '''
+        Method for calculating fitness given genotype as input
+        Input: list or np.array of bits
+        Output: tuple of objective values
+
+        '''
+
+        objective = 0
+        for edge in self.edges_tuples:
+            if genotype[edge[0]] != genotype[edge[1]]:
+                objective += self.graph[edge]
+
+        # Normalize objectives
+        # objective = objective / float(self.opt)
+        return objective
 
 
     def np_generate_random_genotype(self):
