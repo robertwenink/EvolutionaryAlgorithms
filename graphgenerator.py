@@ -3,7 +3,7 @@ from random import Random
 class GraphGenerator:
 
     @staticmethod
-    def generateRandomGraph(nodes, maxWeight, edgeProb, problemId=''):
+    def generateRandomGraph(directory, nodes, maxWeight, edgeProb, problemId=''):
 
         if nodes < 1:
             print('please provide nodes >= 1')
@@ -19,7 +19,7 @@ class GraphGenerator:
 
         rand = Random()
 
-        filename =  f'maxcut_random_{nodes}_{edgeProb}_{maxWeight}' if problemId == '' else f'maxcut_random_{nodes}_{edgeProb}_{maxWeight}_instance_{problemId}'
+        filename =  f'{directory}/maxcut_random_{nodes}_{edgeProb}_{maxWeight}' if problemId == '' else f'maxcut_random_{nodes}_{edgeProb}_{maxWeight}_instance_{problemId}'
         
         with open(filename, "w") as f:
             for n1 in range(nodes):
@@ -32,7 +32,7 @@ class GraphGenerator:
         f.close()
 
     @staticmethod
-    def generateHyperplane(length, width, maxWeight, edgeProb=1, problemId='', hyperplane='grid'):
+    def generateHyperplane(directory, length, width, maxWeight, edgeProb=1, problemId='', hyperplane='grid'):
         '''
         Generates hyperplane in shape of grid
         set options to 'tunnel' or 'donut' for curved hyperplane
@@ -57,7 +57,7 @@ class GraphGenerator:
         
         rand = Random()
 
-        filename = f'maxcut_{length}x{width}_{edgeProb}_{maxWeight}'
+        filename = f'{directory}/maxcut_{length}x{width}_{edgeProb}_{maxWeight}'
         if problemId != '':
             filename += f'_instance_{problemId}'
         filename += f'_{hyperplane}'
