@@ -86,6 +86,16 @@ class MaxCut:
         '''
         return np.random.randint(2, size=self.length_genotypes)
 
+
+    def compare(self, genotype_1, genotype_2):
+        '''
+        Method for comparing 2 genotypes \n
+        Ouput: True if fitness of genotype_1 >= fitness of genotype_2
+
+        '''
+        return self.np_fitness(genotype_1) >= self.np_fitness(genotype_2)
+
+
     def brute_force_opt(self):
         '''
         Method for brute forcing the optimum calculation \n

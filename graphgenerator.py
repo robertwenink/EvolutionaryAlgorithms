@@ -29,7 +29,7 @@ class GraphGenerator:
                         continue
                     if rand.random() < edgeProb:
                         weigth = int(rand.random() * maxWeight + 1)
-                        f.write(f'{n1} {n2} {weigth}')
+                        f.write(f'{n1} {n2} {weigth}\n')
         f.close()
 
     @staticmethod
@@ -93,5 +93,5 @@ class GraphGenerator:
                                 f.write(f'{bottom_node} {node} {weigth}\n')
         f.close()
 
-# GraphGenerator.generateHyperplane('instances', 2, 2, 1, 1, '', 'donut')
-GraphGenerator.generateRandomGraph('instances', 2, 1, 1, '')
+# GraphGenerator.generateHyperplane('instances', 20, 20, 40, 0.8, '', 'grid')
+# GraphGenerator.generateRandomGraph('instances', 300, 40, 1, '')

@@ -1,63 +1,135 @@
 import numpy as np
 
-class ParticleSwarmOptimization:
-    
-    w = 0.729
-    c1 = 1.49445
-    c2 = 1.49445
-    lr = 0.01
+class BinaryParticleSwarmOptimization:
 
-    def __init__(self, instance, numOfBoids, numOfEpochs):
-        self.instance = instance
+    def __init__(self, instance, num_particles=50, numOfEpochs=500):
+        '''
+        Initialize the Binary Particle Swarm Optimization class
 
-        self.swarm_list = [self.Particle(instance, self) for i in range(numOfBoids)]
+        '''
+
+        # Constants
+        self.w = 0.729
+        self.c1 = 1.49445
+        self.c2 = 1.49445
+
+        # fitness function 
+        self.calculate_fitness = instance.np_fitness
+
+        # generator
+        self.generate_random_genotype = instance.np_generate_random_genotype
+
+        # set no epochs
         self.numOfEpochs = numOfEpochs
 
-        self.best_swarm_position = np.random.uniform(low=-500, high=500, size=genes)
-        self.best_swarm_error = 1e80  # Set high value to best swarm error
+        # init best global position so far
+        self.best_position_swarm = self.generate_random_genotype()
 
-    class Particle:
+        # Set high value to best swarm error
+        self.best_fitness_swarm = 0
 
-        def __init__(self, instance, swarm, genes):
-            self.instance = instance
+        # init swarm
+        self.swarm_list = [Particle(self) for i in range(num_particles)]
 
-            self.position = np.random.randint(2, size=instance.length_genotypes)
-            self.velocity = np.random.uniform(2, size=instance.length_genotypes)
-            self.best_part_pos = self.position.copy()
 
-            self.error = error(self.position)
-            self.best_part_err = self.error.copy()
+    def update_best_swarm(self, particle):
+        '''
+        Update the global elite fitness after particle best has been updated
 
-        def setPos(self, pos):
-            self.position = pos
-            self.error = error(pos)
-            if self.error < self.best_part_err:
-                self.best_part_err = self.error
-                self.best_part_pos = pos
+        '''
+        if particle.best_fitness_particle > self.best_fitness_swarm:
+            self.best_position_swarm = particle.best_position_particle
+            self.best_fitness_swarm = particle.best_fitness_particle
 
     
-    def optimize(self):
-        for i in range(self.numOfEpochs):
+    def calculate_velocity(self, particle):
+        '''
+        Calculate the velocity of the Particle
 
-            for j in range(len(self.swarm_list)):
+        '''
+        phi_1 = np.random.rand()
+        phi_2 = np.random.rand()
+        return self.w * particle.velocity + self.c1 * phi_1 * (particle.best_position_particle - particle.position) + \
+                    self.c2 * phi_2 * (self.best_position_swarm - particle.position)
 
-                current_particle = self.swarm_list[j]  # get current particle
 
-                Vcurr = grad_error(current_particle.position)  # calculate current velocity of the particle
+    def sigmoid(self, arr):
+        '''
+        Calculate sigmoid function
 
-                deltaV = self.w * Vcurr \
-                        + self.c1 * (current_particle.best_part_pos - current_particle.position) \
-                        + self.c2 * (self.best_swarm_position - current_particle.position)  # calculate delta V
+        '''
+        return 1/(1 + np.exp(-arr)) 
 
-                new_position = self.swarm_list[j].position - self.lr * deltaV  # calculate the new position
+    
+    def run(self):
+        '''
+        Run the optimization algorithm
 
-                self.swarm_list[j].setPos(new_position)  # update the position of particle
+        '''
+        for epoch in range(self.numOfEpochs):
 
-                if error(new_position) < self.best_swarm_error:  # check the position if it's best for swarm
-                    self.best_swarm_position = new_position
-                    self.best_swarm_error = error(new_position)
+            for i, particle in enumerate(self.swarm_list):
 
-            print('Epoch: {0} | Best position: [{1},{2}] | Best known error: {3}'.format(i,
-                                                                                        self.best_swarm_position[0],
-                                                                                        self.best_swarm_position[1],
-                                                                                        self.best_swarm_error))
+                # calculate new velocity of the particle
+                new_velocity = self.calculate_velocity(particle)
+
+                # calculate new position
+                rand = np.random.rand()
+                sigm = self.sigmoid(new_velocity)
+                new_position = (rand < sigm).astype(np.int64)
+                
+                # update velocity and position
+                particle.update(new_position, new_velocity)
+
+                # if i % 10 == 0 and epoch % 5 == 0:
+                #     print(f'{rand}\n{sigm}\n{new_position}')
+
+
+            print(f'Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
+
+class Particle:
+    '''
+    Inner Particle class belonging to Binary Particle Swarm
+
+    '''
+
+    def __init__(self, swarm):
+        '''
+        Particle initializer
+
+        '''
+        # pointer to swarm
+        self.swarm = swarm
+
+        # random position
+        self.position = self.swarm.generate_random_genotype()
+
+        # random velocity
+        self.velocity = np.random.uniform(low=0, high=1, size=len(self.position))
+
+        # calc fitness
+        self.fitness = self.swarm.calculate_fitness(self.position)
+
+        # set best position
+        self.best_position_particle = self.position.copy()
+
+        # set best fitness
+        self.best_fitness_particle = self.fitness.copy()
+
+        # update swarm
+        self.swarm.update_best_swarm(self)
+
+
+    def update(self, position, velocity):
+        '''
+        Set position of particle and update best position particle
+
+        '''
+        self.position = position
+        self.velocity = velocity
+        self.fitness = self.swarm.calculate_fitness(self.position)
+
+        if self.fitness > self.best_fitness_particle:
+            self.best_position_particle = position
+            self.best_fitness_particle = self.fitness
+            self.swarm.update_best_swarm(self)
