@@ -9,7 +9,7 @@ def fitness(bit_string):
         u = int(edge[0])
         v = int(edge[1])
         w = int(edge[2])
-        if bit_string[u] != bit_string[v]:
+        if bit_string[u-1] != bit_string[v-1]:
             cut += w
 
     return cut
