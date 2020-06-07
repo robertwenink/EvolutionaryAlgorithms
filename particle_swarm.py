@@ -78,6 +78,8 @@ class BinaryParticleSwarmOptimization:
             if epoch % 50 == 0:
                 print(f'Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
 
+        print(f'\nFinal Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
+
 class Particle:
     '''
     Inner Particle class belonging to Binary Particle Swarm
