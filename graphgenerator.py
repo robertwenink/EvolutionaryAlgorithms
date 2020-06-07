@@ -20,6 +20,7 @@ class GraphGenerator:
         rand = Random()
 
         filename =  f'{directory}/maxcut_random_{nodes}_{edgeProb}_{maxWeight}' if problemId == '' else f'maxcut_random_{nodes}_{edgeProb}_{maxWeight}_instance_{problemId}'
+        filename += '.txt'
         
         with open(filename, "w") as f:
             f.write(f'{nodes}\n')
@@ -62,6 +63,7 @@ class GraphGenerator:
         if problemId != '':
             filename += f'_instance_{problemId}'
         filename += f'_{hyperplane}'
+        filename += '.txt'
 
         with open(filename, "w") as f:
             f.write(f'{width*length}\n')
