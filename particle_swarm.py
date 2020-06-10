@@ -21,7 +21,7 @@ class BinaryParticleSwarmOptimization:
         self.best_position_swarm = self.generate_random_genotype()
 
         # Set high value to best swarm error
-        self.best_fitness_swarm = 0
+        self.best_fitness_swarm = self.calculate_fitness(self.best_position_swarm)
 
         # init swarm
         self.swarm_list = [Particle(self) for i in range(num_particles)]
