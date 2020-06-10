@@ -2,6 +2,7 @@ import os
 from time import time
 from maxcut import MaxCut
 from particle_swarm import BinaryParticleSwarmOptimization
+from FastGA.fastGA import FastGA
 
 instances_directory = 'instances/'
 opt_directory = 'opts/'
@@ -22,6 +23,10 @@ def main(instances_directory, opt_directory, sub_directory):
 
     # TODO
     # Call solvers
+    FGA = FastGA(instances[2], 48, 40)
+    t = time()
+    FGA.run()
+    print(f'{time() - t} seconds')
     
 
 if __name__ == '__main__':
