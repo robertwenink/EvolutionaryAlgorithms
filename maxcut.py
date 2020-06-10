@@ -41,13 +41,6 @@ class MaxCut:
                 self.fast_fit[node_1, node_2] = weight
                 self.fast_fit[node_2, node_1] = weight 
 
-        genotypes = self.np_generate_random_genotype_population(3)
-        fit1 = self.np_fitness(genotypes[0])
-        fit2 = self.np_fitness(genotypes[1])
-        fit3 = self.np_fitness(genotypes[2])
-
-        fitn = self.np_fitness_population(genotypes)
-        
         if os.path.exists(opt_directory + filename):
             with open(opt_directory + filename, "r") as f2:
                 self.opt = int(f2.readline())
@@ -90,8 +83,8 @@ class MaxCut:
         We can change the matrix multiplication because fast_fit is symmetric
 
         '''
-        # between = 
-        return np.matmul(genotypes, np.matmul(genotypes == 0, self.fast_fit))
+        # old = np.diagonal(np.matmul(genotypes, np.matmul(self.fast_fit, np.transpose(genotypes == 0))))
+        return np.einsum('ij,jk,ik->i', genotypes, self.fast_fit, genotypes == 0)
 
     def np_generate_random_genotype(self):
         '''
