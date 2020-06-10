@@ -1,19 +1,46 @@
-from fastga import FastMutationOperator
 import copy
 from random import randint
 import random as rand
 
-def fitness(bit_string):
-    cut = 0
+class Ant:
+    def __init__(self):
 
-    for edge in E:
-        u = int(edge[0])
-        v = int(edge[1])
-        w = int(edge[2])
-        if bit_string[u-1] != bit_string[v-1]:
-            cut += w
 
-    return cut
+class ACO:
+    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,Q=100,alpha=1,beta=1):
+        """"
+        Initialise base BBO Ant Colony Optimization for Max-Cut
+        :param instance: the max-cut instance, providing the nodes and edges including weights
+        :param numAnts: number of Ants to run the problem with
+        :param max_its: maximum number of iterations allowed
+        :param rho: evaporation constant
+        :param ph_max: maximum possible pheromone on an edge
+        :param ph_min: minimum possible pheromone on an edge
+        :param Q: constant scaling the increase of pheromone as 1/Q
+
+        If we do Gray Box Optimalization and weights are known we additionally have:
+        :param alpha: pheromone weight factor (how much do we value the pheromone)
+        :param beta: local heuristic information factor (how much do we use the heuristic 'just take edges with large weight')
+        """
+        self.instance = instance
+        self.numAnts = numAnts
+        self.max_its = max_its
+        self.rho = rho
+        self.ph_max = ph_max
+        self.ph_min = ph_min
+        self.Q = Q
+
+        self.previousBestCut = 0
+        self.currentBestCut = 0
+        
+    def updateIndividualPheromone(self,ph):
+        newph = (1-self.rho)*ph + 1/(self.Q+currentBestCut) # - previousBestCut?
+        if newph < self.ph_min:
+            return self.ph_min
+        elif newph > self.ph_max:
+            return self.ph_max
+        else:
+            return newph
 
 def max_fitness(population):
     max_fitness = 0

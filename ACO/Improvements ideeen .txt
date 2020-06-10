@@ -1,1 +1,2 @@
 Eerst met een grotere populatie 'exploration' enforcen door elke ant andere keuzes dan andere ants te laten maken en niet op pheromone af te gaan, voor een x aantal iteraties (min of meer non-overlapping random search); daarna het reguliere algorithme maar met andere inits.
+Adaptive evaporation rate
