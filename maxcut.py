@@ -38,8 +38,8 @@ class MaxCut:
 
                 self.edges_list.append(tuple([node_1, node_2, weight]))
 
-                self.fast_fit[node_1][node_2] = weight
-                self.fast_fit[node_2][node_1] = weight 
+                self.fast_fit[node_1, node_2] = weight
+                self.fast_fit[node_2, node_1] = weight 
         
         if os.path.exists(opt_directory + filename):
             with open(opt_directory + filename, "r") as f2:
