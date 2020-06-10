@@ -19,8 +19,8 @@ and a sample usage is :
 """
 
 from numpy import linspace
-from fastga.utils import flip, wrong_param_error
-from fastga.sampling import sample, sample_waiting_time
+from FastGA.fastga.utils import flip, wrong_param_error
+from FastGA.fastga.sampling import sample, sample_waiting_time
 
 
 __all__ = ["BaseMutationOperator", "OnePlusOneMutationOperator", "FastMutationOperator"]
