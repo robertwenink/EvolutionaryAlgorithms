@@ -26,6 +26,9 @@ class BinaryParticleSwarmOptimization:
         # init swarm
         self.swarm_list = [Particle(self) for i in range(num_particles)]
 
+        self.np_swarm_position = np.random.randint(2, size=(num_particles, self.length_genotypes))
+        self.np_swarm_velocity = np.random.uniform(low=0, high=1, size=len(num_particles, self.position))
+
 
     def update_best_swarm(self, particle):
         '''
