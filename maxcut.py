@@ -33,7 +33,10 @@ class MaxCut:
 
                 if node_1 not in self.edges_dict:
                     self.edges_dict[node_1] = {}
+                if node_2 not in self.edges_dict:
+                    self.edges_dict[node_2] = {}
                 self.edges_dict[node_1][node_2] = weight
+                self.edges_dict[node_2][node_1] = weight
 
                 self.edges_tuples[tuple([node_1, node_2])] = weight
 
