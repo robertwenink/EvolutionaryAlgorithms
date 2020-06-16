@@ -43,18 +43,18 @@ class MaxCut:
                 self.edges_list.append(tuple([node_1, node_2, weight]))
 
                 self.fast_fit[node_1, node_2] = weight
-                self.fast_fit[node_2, node_1] = weight 
+                self.fast_fit[node_2, node_1] = weight
 
         # test1 = self.np_generate_random_genotype_population(100)
         # for gen in test1:
         #     print(self.fitness(np.logical_not(gen)) == self.np_fitness(gen))
 
         self.max_spanning_tree_genotype = self.calculate_max_spanning_tree_genotype()
-        temp1 = self.np_fitness(self.max_spanning_tree_genotype)
+        # temp1 = self.np_fitness(self.max_spanning_tree_genotype)
         self.max_degree_greedy_genotype = self.calculate_max_degree_weight_genotype()
-        temp2 = self.np_fitness(self.max_degree_greedy_genotype)
+        # temp2 = self.np_fitness(self.max_degree_greedy_genotype)
 
-        print(temp1, temp2)
+        # print(temp1, temp2)
     
 
     def np_fitness(self, genotype, counter = None):
@@ -131,6 +131,15 @@ class MaxCut:
         '''
         local_pop = self.np_generate_local_population(genotype)
         return local_pop[np.argmax(self.np_fitness_population(local_pop, counter))]
+
+
+    def np_calculate_bit_flip_value(self, genotype, bit):
+        '''
+        Calculates the bit flip value
+
+        :param genotype: genotype
+        '''
+        return np.sum(self.fast_fit[bit][genotype != genotype[bit]]) - np.sum(self.fast_fit[bit][genotype == genotype[bit]])
 
 
     def np_local_search_population(self, population, counter = None):
