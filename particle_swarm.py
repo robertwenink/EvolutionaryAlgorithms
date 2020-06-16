@@ -1,5 +1,18 @@
 import numpy as np
 
+# Ideas:
+# Restriction - all ideas must be writable in Einstein notation for speed
+# 1: Add local search
+#       Create list of single bit mutations of length genotype_length
+#       Assign best value to current.
+# 2: Add mutations against convergence
+#       Add random mutations each bit in a spring has a probability p 
+#       of changing dependend on the fitness distance to the best solution 
+#       the best solution changes is bits with p = 0, the worst 
+#       solution with p = 0.5.
+# 3: Add mutations based on path distance
+#       Path distance is calculated as the 
+
 class BinaryParticleSwarmOptimization:
 
     def __init__(self, instance, num_particles=50, num_of_epochs=500):
@@ -7,6 +20,9 @@ class BinaryParticleSwarmOptimization:
         Initialize the Binary Particle Swarm Optimization class
 
         '''
+
+        # instance
+        self.instance = instance
 
         # fitness function 
         self.calculate_fitness = instance.np_fitness
@@ -16,6 +32,9 @@ class BinaryParticleSwarmOptimization:
 
         # generator
         self.generate_random_genotype = instance.np_generate_random_genotype
+
+        # local search population
+        self.local_search_population = instance.np_local_search_population
 
         # set no epochs
         self.num_of_epochs = num_of_epochs
@@ -36,13 +55,26 @@ class BinaryParticleSwarmOptimization:
         self.swarm_list = [Particle(self) for i in range(num_particles)]
 
 
-    def np_run(self):
+    def np_run(self, GBO=False):
         '''
         SUPER-MEGA-FAST-PSO-RUNNER
 
         '''
         # All current positions
         self.np_swarm_position = np.random.randint(2, size=(self.num_particles, self.length_genotypes))
+
+        if GBO:
+            fitness = self.calculate_fitness_population(self.np_swarm_position)
+            minargi = np.argsort(fitness)
+
+            # Add Gray Box genotype based on max spanning tree
+            self.np_swarm_position[minargi[0]] = self.instance.max_spanning_tree_genotype
+
+            # Add Gray Box genotype based on greedy edge weight search
+            self.np_swarm_position[minargi[1]] = self.instance.max_degree_greedy_genotype
+            
+            # Perform local search
+            self.local_search_population(self.np_swarm_position)
 
         # Particles best historic position
         self.np_swarm_best_position = self.np_swarm_position.copy()
@@ -66,17 +98,16 @@ class BinaryParticleSwarmOptimization:
             
             self.np_swarm_fitness = self.calculate_fitness_population(self.np_swarm_position)
 
-            self.np_swarm_best_position = np.where(np.repeat( \
-                (self.np_swarm_fitness > self.np_swarm_best_fitness)[:, np.newaxis], self.length_genotypes, axis=1), \
-                    self.np_swarm_position, self.np_swarm_best_position)
+            update = self.np_swarm_fitness > self.np_swarm_best_fitness
+            self.np_swarm_best_position[update] = self.np_swarm_position[update]
 
-            self.np_swarm_best_fitness = np.where(self.np_swarm_fitness > self.np_swarm_best_fitness, \
-                self.np_swarm_fitness, self.np_swarm_best_fitness)
+            self.np_swarm_best_fitness[update] = self.np_swarm_fitness[update]
 
             if epoch % 250 == 0:
                 print(f'Epoch: {epoch} | Best position: {self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)]} | Best known fitness: {self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]}')
 
         print(f'\nFinal Epoch: {epoch+1} | Best position: {self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)]} | Best known fitness: {self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]}')
+
 
 
     def update_best_swarm(self, particle):
@@ -131,6 +162,7 @@ class BinaryParticleSwarmOptimization:
                 print(f'Epoch: {epoch} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
 
         print(f'\nFinal Epoch: {epoch+1} | Best position: {self.best_position_swarm} | Best known fitness: {self.best_fitness_swarm}')
+
 
 class Particle:
     '''
