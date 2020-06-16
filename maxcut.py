@@ -52,11 +52,9 @@ class MaxCut:
         temp2 = self.np_fitness(self.max_degree_greedy_genotype)
 
         print(temp1, temp2)
-
-        self.count_evals = 0
     
 
-    def np_fitness(self, genotype):
+    def np_fitness(self, genotype, counter = None):
         '''
         Method for calculating fitness given genotype as input \n
         Input: list or np.array of bits \n
@@ -64,11 +62,11 @@ class MaxCut:
 
         '''
 
-        self.count_evals += 1
+        if counter is not None: counter += 1
         return np.einsum('i, ik, k', genotype, self.fast_fit, genotype == 0)
 
 
-    def fitness(self, genotype):
+    def fitness(self, genotype, counter = None):
         '''
         Method for calculating fitness given genotype as input
         Input: list or np.array of bits
@@ -76,7 +74,7 @@ class MaxCut:
 
         '''
 
-        self.count_evals += 1
+        if counter is not None: counter += 1
         objective = 0
         for edge in self.edges_tuples:
             if genotype[edge[0]] != genotype[edge[1]]:
@@ -86,14 +84,14 @@ class MaxCut:
         # objective = objective / float(self.opt)
         return np.int64(objective)
 
-    def np_fitness_population(self, genotypes):
+    def np_fitness_population(self, genotypes, counter = None):
         '''
         Method for calculating fitness for numpy array of genotypes
         We can change the matrix multiplication because fast_fit is symmetric
 
         '''
         # old = np.diagonal(np.matmul(genotypes, np.matmul(self.fast_fit, np.transpose(genotypes == 0))))
-        self.count_evals += genotypes.shape[0]
+        if counter is not None: counter += genotypes.shape[0]
         return np.einsum('ij,jk,ik->i', genotypes, self.fast_fit, genotypes == 0)
 
     def np_generate_random_genotype(self):
@@ -123,22 +121,22 @@ class MaxCut:
         return self.np_fitness(genotype_1) >= self.np_fitness(genotype_2)
 
 
-    def np_local_search_genotype(self, genotype):
+    def np_local_search_genotype(self, genotype, counter = None):
         '''
         Calculate local search optimum of genotype
 
         '''
         local_pop = self.np_generate_local_population(genotype)
-        return local_pop[np.argmax(self.np_fitness_population(local_pop))]
+        return local_pop[np.argmax(self.np_fitness_population(local_pop, counter))]
 
 
-    def np_local_search_population(self, population):
+    def np_local_search_population(self, population, counter = None):
         '''
         Perform local search on current population
 
         '''
         for i, particle in enumerate(population):
-            population[i] = self.np_local_search_genotype(particle)
+            population[i] = self.np_local_search_genotype(particle, counter)
         return population
 
 
