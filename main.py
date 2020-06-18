@@ -16,11 +16,15 @@ def main(instances_directory, opt_directory, sub_directory):
             instance = MaxCut(f, instances_directory, opt_directory)
             instances.append(instance)
 
-    BPSO = BinaryParticleSwarmOptimization(instances[2], 3, 500)
+    BPSO = BinaryParticleSwarmOptimization(instances[2], 200, 1000)
 
     t = time()
     BPSO.np_run(True)
-    print(f'{time() - t} seconds')
+    print(f'{time() - t} seconds\n')
+
+    t = time()
+    BPSO.np_run()
+    print(f'{time() - t} seconds\n')
 
     # TODO
     # Call solvers

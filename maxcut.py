@@ -46,14 +46,16 @@ class MaxCut:
                 self.fast_fit[node_1, node_2] = weight
                 self.fast_fit[node_2, node_1] = weight
 
-        # test1 = self.np_generate_random_genotype_population(100)
+        # test1 = self.np_generate_random_genotype_population(2)
         # for gen in test1:
-        #     print(self.fitness(np.logical_not(gen)) == self.np_fitness(gen))
+        #     print(self.np_calculate_all_bits_flip_value(gen))
+        # #     print(self.fitness(np.logical_not(gen)) == self.np_fitness(gen))
+        # print(self.np_calculate_all_bits_flip_value_population(test1))
 
-        self.max_spanning_tree_genotype = self.calculate_max_spanning_tree_genotype()
-        # temp1 = self.np_fitness(self.max_spanning_tree_genotype)
-        self.max_degree_greedy_genotype = self.calculate_max_degree_weight_genotype()
-        # temp2 = self.np_fitness(self.max_degree_greedy_genotype)
+
+        # self.max_spanning_tree_genotype = self.calculate_max_spanning_tree_genotype() # Use the function directly if needed
+        
+        # self.max_degree_greedy_genotype = self.calculate_max_degree_weight_genotype() # Use the function directly if needed
 
         # print(temp1, temp2)
     
@@ -125,15 +127,6 @@ class MaxCut:
         return self.np_fitness(genotype_1) >= self.np_fitness(genotype_2)
 
 
-    def np_local_search_genotype(self, genotype, counter = None):
-        '''
-        Calculate local search optimum of genotype
-
-        '''
-        local_pop = self.np_generate_local_population(genotype)
-        return local_pop[np.argmax(self.np_fitness_population(local_pop, counter))]
-
-
     def np_calculate_bit_flip_value(self, genotype, bit):
         '''
         Calculates the bit flip value
@@ -143,14 +136,48 @@ class MaxCut:
         return np.sum(self.fast_fit[bit][genotype != genotype[bit]]) - np.sum(self.fast_fit[bit][genotype == genotype[bit]])
 
 
+    def np_calculate_all_bits_flip_value(self, genotype):
+        '''
+        Calculates bit flip value of entire genotype, basically a local search
+
+        :param genotype: genotype
+
+        :return: array of values of bitflip
+        '''
+        return np.sum(self.fast_fit * (genotype != genotype[:, np.newaxis]) - self.fast_fit * (genotype == genotype[:, np.newaxis]), axis=1)
+
+
+    def np_calculate_all_bits_flip_value_population(self, population):
+        '''
+        Calculates bit flip values for all bits in the population
+
+        :param population: array of genotypes
+        :return: return matrix of bitflip values
+        '''
+        temp = np.zeros((len(population), self.length_genotypes))
+        for i, genotype in enumerate(population):
+            temp[i] = self.np_calculate_all_bits_flip_value(genotype)
+        return temp
+
+
+    def np_local_search_genotype(self, genotype, counter = None):
+        '''
+        Calculate local search optimum of genotype
+
+        '''
+        local_pop = self.np_generate_local_population(genotype)
+        return local_pop[np.argmax(self.np_fitness_population(local_pop, counter))]
+
+
     def np_local_search_population(self, population, counter = None):
         '''
         Perform local search on current population
 
         '''
+        temp = np.zeros_like(population)
         for i, particle in enumerate(population):
-            population[i] = self.np_local_search_genotype(particle, counter)
-        return population
+            temp[i] = self.np_local_search_genotype(particle, counter)
+        return temp
 
 
     def np_generate_local_population(self, genotype):

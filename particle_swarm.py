@@ -33,9 +33,6 @@ class BinaryParticleSwarmOptimization:
         # generator
         self.generate_random_genotype = instance.np_generate_random_genotype
 
-        # local search population
-        self.local_search_population = instance.np_local_search_population
-
         # set no epochs
         self.num_of_epochs = num_of_epochs
 
@@ -68,13 +65,13 @@ class BinaryParticleSwarmOptimization:
             minargi = np.argsort(fitness)
 
             # Add Gray Box genotype based on max spanning tree
-            self.np_swarm_position[minargi[0]] = self.instance.max_spanning_tree_genotype
+            self.np_swarm_position[minargi[0]] = self.instance.calculate_max_spanning_tree_genotype()
 
             # Add Gray Box genotype based on greedy edge weight search
-            self.np_swarm_position[minargi[1]] = self.instance.max_degree_greedy_genotype
+            self.np_swarm_position[minargi[1]] = self.instance.calculate_max_degree_weight_genotype()
             
             # Perform local search
-            self.local_search_population(self.np_swarm_position)
+            self.np_swarm_position = self.instance.np_local_search_population(self.np_swarm_position)
 
         # Particles best historic position
         self.np_swarm_best_position = self.np_swarm_position.copy()
@@ -93,6 +90,10 @@ class BinaryParticleSwarmOptimization:
             self.np_swarm_velocity = self.np_swarm_velocity + \
                 np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position - self.np_swarm_position) + \
                     np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)] - self.np_swarm_position)
+
+            if GBO: 
+                bit_flip_vals = self.instance.np_calculate_all_bits_flip_value_population(self.np_swarm_position)
+                self.np_swarm_velocity += bit_flip_vals / np.max(np.abs(bit_flip_vals),axis=1)[:, np.newaxis]
 
             self.np_swarm_position = (np.random.rand(self.num_particles, self.length_genotypes) < self.sigmoid(self.np_swarm_velocity)).astype(np.int64)
             
