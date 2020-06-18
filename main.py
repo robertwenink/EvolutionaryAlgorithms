@@ -49,8 +49,8 @@ def random_instance():
     
 
 if __name__ == '__main__':
-    # main(instances_directory, opt_directory, sub_directory)
-    random_instance()
+    main(instances_directory, opt_directory, sub_directory)
+    # random_instance()
     
 
 
