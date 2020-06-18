@@ -310,7 +310,7 @@ class NP_MaxCut_Random(MaxCut):
 
 class NP_MaxCut_From_File(MaxCut):
 
-    def __init__(self, name, directory=''):
+    def __init__(self, name='', directory=''):
         '''
         Retreive fast fit distance matrices from file
 
@@ -327,7 +327,16 @@ class NP_MaxCut_From_File(MaxCut):
             else:
                 path = directory + '/' + name
 
-        self.fast_fit = np.load(path + '.npy')
+        if path[-4:] != '.npy':
+            path += '.npy'
+
+        self.fast_fit = np.load(path)
 
         self.length_genotypes = len(self.fast_fit)
         
+def retrieve_all_instances_from_directory(directory):
+
+    if not os.path.isdir(directory):
+        raise ValueError(f'Directory {directory} does not exist!')
+
+    return [NP_MaxCut_From_File(filename, directory) for filename in os.listdir(directory) if filename.endswith('.npy')]
