@@ -1,6 +1,6 @@
 import os
 from time import time
-from maxcut import MaxCut
+from maxcut import *
 from particle_swarm import BinaryParticleSwarmOptimization
 # from FastGA.fastGA import FastGA
 
@@ -16,15 +16,15 @@ def main(instances_directory, opt_directory, sub_directory):
             instance = MaxCut(f, instances_directory, opt_directory)
             instances.append(instance)
 
-    BPSO = BinaryParticleSwarmOptimization(instances[2], 200, 1000)
+    # BPSO = BinaryParticleSwarmOptimization(instances[2], 200, 1000)
 
-    t = time()
-    BPSO.np_run(True)
-    print(f'{time() - t} seconds\n')
+    # t = time()
+    # BPSO.np_run(True)
+    # print(f'{time() - t} seconds\n')
 
-    t = time()
-    BPSO.np_run()
-    print(f'{time() - t} seconds\n')
+    # t = time()
+    # BPSO.np_run()
+    # print(f'{time() - t} seconds\n')
 
     # TODO
     # Call solvers
@@ -32,7 +32,24 @@ def main(instances_directory, opt_directory, sub_directory):
     # t = time()
     # FGA.run()
     # print(f'{time() - t} seconds')
+
+
+def random_instance():
+
+    instance = NP_MaxCut_Random(nodes=500, max_weight=200, edge_prob=0.5)
+
+    instance.write_to_file('testname', 'testdirectory')
+
+    instance2 = NP_MaxCut_From_File('testname', 'testdirectory')
+
+    # BPSO_GBO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run(GBO=True)
+    BPSO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run()
     
 
 if __name__ == '__main__':
     main(instances_directory, opt_directory, sub_directory)
+    # random_instance()
+    
+
+
+

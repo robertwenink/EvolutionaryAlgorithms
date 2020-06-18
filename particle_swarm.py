@@ -108,6 +108,7 @@ class BinaryParticleSwarmOptimization:
                 print(f'Epoch: {epoch} | Best position: {self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)]} | Best known fitness: {self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]}')
 
         print(f'\nFinal Epoch: {epoch+1} | Best position: {self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)]} | Best known fitness: {self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]}')
+        return self
 
 
 

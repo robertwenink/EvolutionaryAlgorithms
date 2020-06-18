@@ -261,3 +261,73 @@ class MaxCut:
                 pos += [y for x in adjacency_matrix[:, n].nonzero() for y in x if y not in pos and not genes_set[y]]
 
         return new_genotype
+
+
+    
+class NP_MaxCut_Random(MaxCut):
+
+    def __init__(self, nodes, max_weight, edge_prob):
+        '''
+        Initializer of random numpy maxcut matrix generator
+
+        :param nodes: number of nodes in the graph
+        :type nodes: int
+        :param max_weight: maximum weight of 
+        :type max_weight: int
+        :param edge_prob: probability of edge existance
+        '''
+
+        self.length_genotypes = nodes
+
+        self.fast_fit = np.random.randint(low=1, high=max_weight, size=(nodes, nodes), dtype=np.int) * \
+            (np.random.rand(nodes, nodes) < edge_prob)
+        self.fast_fit = ((self.fast_fit + self.fast_fit.T) / 2).astype(np.int)
+        np.fill_diagonal(self.fast_fit, 0)
+        print(f'Made instance with {nodes} genes, max weight {max_weight} and edge probability {edge_prob}')
+
+
+    def write_to_file(self, name='', directory=''):
+        '''
+        Write the fast fit distance matric to a txt file
+
+        :param name: name of the file, defaults to ''
+        :type name: str, optional
+        :param directory: directory of the file, defaults to ''
+        :type directory: str, optional
+        '''
+        
+        path = name
+        if name == '':
+            path = f'instance_{self.length_genotypes}x{self.length_genotypes}_max_weight_{np.max(self.fast_fit)}'
+        if directory != '':
+            if not os.path.isdir(directory):
+                os.makedirs(directory)
+            if directory[-1] == '/':
+                path = directory + path
+            else:
+                path = directory + '/' + path
+        np.save(path, self.fast_fit)
+
+class NP_MaxCut_From_File(MaxCut):
+
+    def __init__(self, name, directory=''):
+        '''
+        Retreive fast fit distance matrices from file
+
+        :param name: file path
+        :type name: str
+        :param directory: directory of file, defaults to ''
+        :type directory: str, optional
+        '''
+
+        path = name
+        if directory != '':
+            if directory[-1] == '/':
+                path = directory + name
+            else:
+                path = directory + '/' + name
+
+        self.fast_fit = np.load(path + '.npy')
+
+        self.length_genotypes = len(self.fast_fit)
+        
