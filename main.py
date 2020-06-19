@@ -42,7 +42,7 @@ def random_instance():
 
     instance2 = NP_MaxCut_From_File('testname1', 'testdirectory')
 
-    instances = retrieve_all_instances_from_directory('testdirectory')
+    instances = NP_MaxCut_From_File.retrieve_all_instances_from_directory('testdirectory')
 
     # BPSO_GBO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run(GBO=True)
     BPSO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run()

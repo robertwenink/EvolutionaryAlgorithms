@@ -334,9 +334,10 @@ class NP_MaxCut_From_File(MaxCut):
 
         self.length_genotypes = len(self.fast_fit)
         
-def retrieve_all_instances_from_directory(directory):
+    @staticmethod
+    def retrieve_all_instances_from_directory(directory):
 
-    if not os.path.isdir(directory):
-        raise ValueError(f'Directory {directory} does not exist!')
+        if not os.path.isdir(directory):
+            raise ValueError(f'Directory {directory} does not exist!')
 
-    return [NP_MaxCut_From_File(filename, directory) for filename in os.listdir(directory) if filename.endswith('.npy')]
+        return [NP_MaxCut_From_File(filename, directory) for filename in os.listdir(directory) if filename.endswith('.npy')]
