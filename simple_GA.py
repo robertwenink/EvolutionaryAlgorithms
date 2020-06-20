@@ -60,6 +60,8 @@ class GeneticAlgorithm(object):
         self.opt = opt
         self.evals = 0
         self.opt_evals = -1
+        self.fittest_individual = -1
+
 
         # seed random number generator
         self.random = random.Random(random_state)
@@ -151,6 +153,9 @@ class GeneticAlgorithm(object):
         """
         new_population = []
         elite = copy.deepcopy(self.current_generation[0])
+        if elite.fitness > self.fittest_individual:
+            self.fittest_individual = elite.fitness
+
         selection = self.selection_function
 
         while len(new_population) < self.population_size:
@@ -210,7 +215,7 @@ class GeneticAlgorithm(object):
         generation.
         """
         best = self.current_generation[0]
-        return (best.fitness, best.genes, self.opt_evals)
+        return (best.fitness, best.genes, self.opt_evals, self.fittest_individual)
 
 
 
