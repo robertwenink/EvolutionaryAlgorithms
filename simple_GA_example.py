@@ -19,7 +19,7 @@ for f in files:
 
 
 
-ga = GeneticAlgorithm(MaxCut = instances[2], population_size= 50, generations = 100, crossover_probability=0.8, mutation_probability = 0.2)
+ga = GeneticAlgorithm(MaxCut = instances[3], population_size= 500, generations = 10, crossover_probability=0.8, mutation_probability = 0.2, opt= 8900)
 
 ga.run()                                    # run the GA
 print(ga.best_individual())              # print the GA's best solution

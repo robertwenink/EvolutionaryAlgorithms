@@ -34,6 +34,7 @@ class GeneticAlgorithm(object):
                  generations,
                  crossover_probability,
                  mutation_probability,
+                 opt,
                  elitism=True,
                  maximise_fitness=True,
                  verbose=False,
@@ -56,6 +57,9 @@ class GeneticAlgorithm(object):
         self.elitism = elitism
         self.maximise_fitness = maximise_fitness
         self.verbose = verbose
+        self.opt = opt
+        self.evals = 0
+        self.opt_evals = -1
 
         # seed random number generator
         self.random = random.Random(random_state)
@@ -130,6 +134,9 @@ class GeneticAlgorithm(object):
         """
         for individual in self.current_generation:
             individual.fitness = self.fitness_function(np.asarray(individual.genes))
+            if individual.fitness >= self.opt and self.opt_evals == -1:
+                self.opt_evals = self.evals
+            self.evals += 1
 
     def rank_population(self):
         """Sort the population by fitness according to the order defined by
@@ -203,7 +210,9 @@ class GeneticAlgorithm(object):
         generation.
         """
         best = self.current_generation[0]
-        return (best.fitness, best.genes)
+        return (best.fitness, best.genes, self.opt_evals)
+
+
 
     def last_generation(self):
         """Return members of the last generation as a generator function."""
