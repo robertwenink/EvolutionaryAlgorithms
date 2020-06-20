@@ -33,6 +33,8 @@ def main(instances_directory, opt_directory, sub_directory):
     # FGA.run()
     # print(f'{time() - t} seconds')
 
+    
+
 
 def random_instance():
 

@@ -3,6 +3,45 @@ import math
 import copy
 import random
 
+
+class Ant_BBO:
+    def __init__(self,length_genotypes):
+        self.Lg = length_genotypes
+        self.genotype = np.zeros(length_genotypes)
+        self.fitness = int(0)
+
+        self.trail = np.zeros(length_genotypes)
+
+    def run(self,pdict):
+        """
+        Run the procedure for an ant for a single iteration
+        """
+
+        ind = 0
+        # choosing path from initial node
+        while True:
+            k2, v = random.choice(list(pdict[-1].items())) # v stores the relative chance based on amount of pheromone, -1 is startup node not in genotype
+            if v >= np.random.uniform(0,1,1):
+                self.trail[ind] = k2 # we have transited to k2
+                break
+
+        while ind < self.Lg-1:
+            k1 = self.trail[ind]
+            while True:
+                # randomly choose an index/node in the candidate set and decide using p if we are going to switch it
+                k2, v = random.choice(list(pdict[k1].items()))
+
+                if v >= np.random.uniform(0,1,1):
+                    self.trail[ind+1] = k2 # we have transited to k2
+                    ind += 1
+                    break
+
+    def transformTrailToGenotype(self):
+        # include nodes at indices 0 to N-1, not-include N to 2N-1
+        self.genotype = (self.trail < self.Lg).astype('int32') 
+
+
+
 class Ant_GBO:
     def __init__(self,length_genotypes):
         self.L = length_genotypes
@@ -20,8 +59,9 @@ class Ant_GBO:
         """
         Run the procedure for an ant for a single iteration
         """
-        if newInit:
-            self.cutVector = self.rand_bin_array(math.ceil(self.L/2),self.L)
+        if newInit: # conditional for use of local search where we do not want to initialise the cutvector again
+            self.cutVector = np.ones(np.shape(self.cutVector))
+
         self.Candidates = np.ones(np.shape(self.cutVector),dtype=bool)
         self.initializeDeltaF(edges_dict,ph_dict,alpha,beta)
         self.updateP()
@@ -90,41 +130,4 @@ class Ant_GBO:
         return arr
 
 
-
-
-class Ant_BBO:
-    def __init__(self,length_genotypes):
-        self.Lg = length_genotypes
-        self.genotype = np.zeros(length_genotypes)
-        self.fitness = int(0)
-
-        self.trail = np.zeros(length_genotypes)
-
-    def run(self,pdict):
-        """
-        Run the procedure for an ant for a single iteration
-        """
-
-        ind = 0
-        # choosing path from initial node
-        while True:
-            k2, v = random.choice(list(pdict[-1].items())) # v stores the relative chance based on amount of pheromone, -1 is startup node not in genotype
-            if v >= np.random.uniform(0,1,1):
-                self.trail[ind] = k2 # we have transited to k2
-                break
-
-        while ind < self.Lg-1:
-            k1 = self.trail[ind]
-            while True:
-                # randomly choose an index/node in the candidate set and decide using p if we are going to switch it
-                k2, v = random.choice(list(pdict[k1].items()))
-
-                if v >= np.random.uniform(0,1,1):
-                    self.trail[ind+1] = k2 # we have transited to k2
-                    ind += 1
-                    break
-
-    def transformTrailToGenotype(self):
-        # include nodes at indices 0 to N-1, not-include N to 2N-1
-        self.genotype = (self.trail < self.Lg).astype('int32') 
 

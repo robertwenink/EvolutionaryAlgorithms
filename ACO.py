@@ -8,38 +8,56 @@ from random import randint
 import ACO
 import math
 from operator import attrgetter
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
-    instances_directory = 'instances/'
-    # instances_directory = 'from_assignment_3/'
+    # instances_directory = '/instances/'
+    instances_directory = 'from_assignment_3/'
     opt_directory = 'opts/'
-    instancename = "maxcut_4x4_1_1_donut"
+    # instancename = "maxcut_4x4_1_1_donut"
     # instancename = "maxcut_2x2_1_1_donut"
-    # instancename = 'newL25_2' #opt = 530
+    instancename = 'newL25_2' #opt = 530
+    # instancename = 'newL12_1' # opt = 127
+    # instancename = 'newL12_2' # opt = 124
 
     instance = maxcut.MaxCut(instancename+".txt", instances_directory, opt_directory)
-    numAnts = 4
-    max_its = 50
+    numAnts = 5
+    max_its = 100
     rho = 1 - 0.01**(1/(max_its/4))
     ph_max=2
     ph_min=1
     alpha = 1
-    ACO_BBO = ACO.ACO_BBO(instance,numAnts,max_its,rho,ph_max,ph_min,alpha)
+
+    fig, ax = plt.subplots()
+    fig2, ax2 = plt.subplots()
+
+    ACO_BBO = ACO.ACO_BBO(instance,numAnts,max_its,rho,ph_max,ph_min,alpha,ax)
     ACO_BBO.run()
 
+    alpha = 2
     beta = 1
-    ACO_GBO = ACO.ACO_GBO(instance,numAnts,max_its,rho,ph_max,ph_min,alpha,beta)
+    ACO_GBO = ACO.ACO_GBO(instance,numAnts,max_its,rho,ph_max,ph_min,alpha,beta,ax)
     ACO_GBO.run()
+
+    ax2.plot(ACO_BBO.numEvalsList,ACO_BBO.archiveElitistList,color="black",label="Black Box archive elitist fitness")
+    ax2.plot(ACO_BBO.numEvalsList,ACO_BBO.averageFitnessList,'-*',color="black",label="Black Box average population fitness")
+
+    ax2.plot(ACO_GBO.numEvalsList,ACO_GBO.archiveElitistList,color="silver",label="Grey Box archive elitist fitness")
+    ax2.plot(ACO_GBO.numEvalsList,ACO_GBO.averageFitnessList,'-*',color="silver",label="Grey Box average population fitness")
+    ax2.legend()
 
     print("Black Box elitist:")
     ACO_BBO.printArchiveElitist()
     print("Grey Box elitist:")
     ACO_GBO.printArchiveElitist()
 
+    ax.legend(loc='lower left')
+    plt.show()
+
 
 class ACO:
-    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1):
+    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1,ax=None):
         """"
         Initialise base Ant Colony Optimization class
         :param instance: the max-cut instance, providing the nodes and edges including weights
@@ -49,6 +67,7 @@ class ACO:
         :param ph_max: maximum possible pheromone on an edge
         :param ph_min: minimum possible pheromone on an edge
         :param alpha: pheromone weight factor (how much do we value the pheromone)
+        :param ax: provide matplotlib axis for optional plotting of elitist trend
         """
         self.instance = instance 
         self.edges_dict = self.getEdgedict(instance)
@@ -68,6 +87,14 @@ class ACO:
         self.AntColony = self.initialiseAntPopulation(numAnts)
         self.elitist = copy.deepcopy(self.AntColony[0])
         self.archiveElitist = copy.deepcopy(self.AntColony[0])
+
+        self.ax = ax
+        self.hasnolabel = True
+        self.numEvals = 0
+
+        self.archiveElitistList = []
+        self.averageFitnessList = []
+        self.numEvalsList = []
 
     def run(self):
         raise NotImplementedError
@@ -107,6 +134,7 @@ class ACO:
         Evaluating the fitness of the genotype using the centrally defined fitness function of the problem instance.
         """
         ant.fitness = int(self.instance.np_fitness(ant.genotype))
+        self.numEvals += 1
 
     def getAveragePopulationFitness(self):
         """
@@ -137,6 +165,14 @@ class ACO:
         if self.elitist.fitness > self.archiveElitist.fitness:
             self.archiveElitist = copy.deepcopy(self.elitist)
 
+    def logPlottingData(self):
+        """
+        Log the new data after evaluation and after finding the elitist
+        """
+        self.archiveElitistList.append(self.archiveElitist.fitness)
+        self.numEvalsList.append(self.numEvals)
+        self.averageFitnessList.append(self.getAveragePopulationFitness())
+
     def printElitist(self):
         print(self.elitist.fitness)
         print(self.elitist.genotype)
@@ -151,12 +187,25 @@ class ACO:
     def printDict(self,dicttoprint):
         print(json.dumps(dicttoprint,sort_keys=True, indent=4))
 
+    def plotAgainstNumevals(self,data,text,col):
+        if self.hasnolabel:
+            t = text 
+        else:
+            t = None
+
+        if self.ax is not None:
+            self.ax.scatter(self.numEvals,data, label= t , color = col)
+            self.hasnolabel = False
+
+        self.ax.set_xlabel("Number of evaluations")
+        self.ax.set_ylabel("Fitness")
+
 ##################################################################
 ###################### Black Box specific ########################
 ##################################################################
 class ACO_BBO(ACO):
-    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1):
-        ACO.__init__(self,instance,numAnts,max_its,rho,ph_max,ph_min,alpha)
+    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1,ax=None):
+        ACO.__init__(self,instance,numAnts,max_its,rho,ph_max,ph_min,alpha,ax)
 
     def run(self):
         """
@@ -182,7 +231,10 @@ class ACO_BBO(ACO):
             self.adict = self.createAndUpdateRelativePheromoneDict(self.ph_dict,self.alpha)
             self.pdict = self.createAndUpdatePdict(self.adict)
 
+            # for data plotting
+            self.logPlottingData()
             self.printElitist()
+            self.plotAgainstNumevals(self.elitist.fitness,"BBO elitist fitness","black")
 
         self.printArchiveElitist()
 
@@ -275,13 +327,13 @@ class ACO_BBO(ACO):
 ##################################################################
 
 class ACO_GBO(ACO):
-    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1,beta=1):
+    def __init__(self,instance,numAnts,max_its,rho,ph_max=1,ph_min=0,alpha=1,beta=1,ax=None):
         """
         Initialise base Ant Colony Optimization for Max-Cut
         Doing Gray Box Optimalization with weights and problem structure known we additionally have:
         :param beta : local heuristic information factor for weights (how much do we use the heuristic 'just take edges with large weight')
         """
-        ACO.__init__(self,instance,numAnts,max_its,rho,ph_max,ph_min,alpha)
+        ACO.__init__(self,instance,numAnts,max_its,rho,ph_max,ph_min,alpha,ax)
         self.beta = beta
 
         self.num_edges = len(self.edges_dict)/2 # undirected graph
@@ -309,7 +361,10 @@ class ACO_GBO(ACO):
             self.findElitist()
             self.updatePheromone()
 
+            # for data plotting
+            self.logPlottingData()
             self.printElitist()
+            self.plotAgainstNumevals(self.elitist.fitness,"GBO elitist fitness","silver")
 
         self.printArchiveElitist()
 
@@ -346,13 +401,13 @@ class ACO_GBO(ACO):
 
     def findElitist(self):
         """
-        Overriding the standard implementation as for the used update rule the number of cut edges of the archive Elitist is used and I like to update it once here
+        Overriding the standard implementation as for the used update rule the number of cut edges of an elitist is used and I like to update it once here
         """
         self.elitist = max(self.AntColony, key=attrgetter('fitness'))
-        # self.C_elitist = self.findNumCutEdges(self.elitist)
+        self.C_elitist = self.findNumCutEdges(self.elitist)
         if self.elitist.fitness > self.archiveElitist.fitness:
             self.archiveElitist = copy.deepcopy(self.elitist)
-            self.C_elitist = self.findNumCutEdges(self.archiveElitist)
+            # self.C_elitist = self.findNumCutEdges(self.archiveElitist)
             
     def findNumCutEdges(self,ant):
         """
