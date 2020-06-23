@@ -6,6 +6,8 @@ import random
 import copy
 from operator import attrgetter
 import numpy as np
+import itertools
+import random
 
 from six.moves import range
 
@@ -83,8 +85,48 @@ class GeneticAlgorithm_grey_box(object):
             """
             return [self.random.randint(0, 1) for _ in range(maxcut.length_genotypes)]
 
-        def group_crossover(parent_1, parent_2, parent_3):
-            
+        def group_crossover(parents_list):
+            all_parents = []
+            for parent in parents_list:
+                solution_zeros = set([i for i, e in enumerate(parent.genes) if e != 1])
+                solution_ones = set([i for i, e in enumerate(parent.genes) if e != 0])
+                all_parents.append([solution_zeros, solution_ones])
+            permutations = ["".join(seq) for seq in itertools.product("01", repeat=len(parents_list))]
+            int_perms = []
+            for i in permutations:
+                int_perms.append([int(char) for char in i])
+            max_set = {}
+            for i in int_perms:
+                intersection = set(range(len(parents_list[0].genes)))
+                for index, j in enumerate(i):
+                    intersection = intersection & all_parents[index][j]
+                if len(intersection) > len(max_set):
+                    max_set = intersection
+            for i in max_set:
+                for parent in all_parents:
+                    if i in parent[0]:
+                        parent[0].remove(i)
+                    if i in parent[1]:
+                        parent[1].remove(i)
+            max_set_2 = {}
+            for i in int_perms:
+                intersection = set(range(len(parents_list[0].genes)))
+                for index, j in enumerate(i):
+                    intersection = intersection & all_parents[index][j]
+                if len(intersection) > len(max_set_2):
+                    max_set_2 = intersection
+            for i in range(len(parents_list[0].genes)):
+                if i not in max_set and i not in max_set_2:
+                    if random.uniform(0, 1) > 0.5:
+                        max_set.add(i)
+                    else:
+                        max_set_2.add(i)
+            new_chromosome = [0] * len(parents_list[0].genes)
+            for i in max_set:
+                new_chromosome[i] = 1
+
+            return new_chromosome
+
         def crossover(parent_1, parent_2):
             """Crossover (mate) two parents to produce two children.
             :param parent_1: candidate solution representation (list)
@@ -98,8 +140,14 @@ class GeneticAlgorithm_grey_box(object):
 
         def mutate(individual):
             """Reverse the bit of a random index in an individual."""
-            mutate_index = self.random.randrange(len(individual))
-            individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
+            for index, j in enumerate(individual):
+                if random.uniform(0, 1) < self.mutation_probability:
+                    if individual[index] == 1:
+                        individual[index] = 0
+                    else:
+                        individual[index] = 1
+            # mutate_index = self.random.randrange(len(individual))
+            # individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
 
         def random_selection(population):
             """Select and return a random member of the population."""
@@ -118,10 +166,9 @@ class GeneticAlgorithm_grey_box(object):
 
         self.tournament_selection = tournament_selection
         self.tournament_size = self.population_size // 10
-        print(self.tournament_size)
         self.random_selection = random_selection
         self.create_individual = create_individual
-        self.crossover_function = crossover
+        self.crossover_function = group_crossover
         self.mutate_function = mutate
         self.selection_function = self.tournament_selection
 
@@ -168,6 +215,8 @@ class GeneticAlgorithm_grey_box(object):
         while len(new_population) < self.population_size:
             parent_1 = copy.deepcopy(selection(self.current_generation))
             parent_2 = copy.deepcopy(selection(self.current_generation))
+            parent_3 = copy.deepcopy(selection(self.current_generation))
+
 
             child_1, child_2 = parent_1, parent_2
             child_1.fitness, child_2.fitness = 0, 0
@@ -175,9 +224,12 @@ class GeneticAlgorithm_grey_box(object):
             can_crossover = self.random.random() < self.crossover_probability
             can_mutate = self.random.random() < self.mutation_probability
 
+            # if can_crossover:
+            #     child_1.genes, child_2.genes = self.crossover_function(
+            #         parent_1.genes, parent_2.genes)
             if can_crossover:
-                child_1.genes, child_2.genes = self.crossover_function(
-                    parent_1.genes, parent_2.genes)
+                child_1.genes = self.crossover_function(
+                    [parent_1, parent_2, parent_3])
 
             if can_mutate:
                 self.mutate_function(child_1.genes)
@@ -198,14 +250,14 @@ class GeneticAlgorithm_grey_box(object):
             #if child_1 not in new_population:
             new_population.append(child_1)
 
-            if len(new_population) < self.population_size:
-                child_2.fitness = self.fitness_function(np.asarray(child_2.genes))
-                self.evals += 1
-                #print(str(child_2.genes) + ' pre2 ' + str(child_2.fitness))
-                child_2.genes, child_2.fitness = self.local_search(child_2)
-                #print(str(child_2.genes) + ' post2 ' + str(child_2.fitness))
-                #if child_2 not in new_population:
-                new_population.append(child_2)
+            # if len(new_population) < self.population_size:
+            #     child_2.fitness = self.fitness_function(np.asarray(child_2.genes))
+            #     self.evals += 1
+            #     #print(str(child_2.genes) + ' pre2 ' + str(child_2.fitness))
+            #     child_2.genes, child_2.fitness = self.local_search(child_2)
+            #     #print(str(child_2.genes) + ' post2 ' + str(child_2.fitness))
+            #     #if child_2 not in new_population:
+            #     new_population.append(child_2)
 
         if self.elitism:
             new_population.append(elite)

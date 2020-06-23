@@ -94,8 +94,16 @@ class GeneticAlgorithm(object):
 
         def mutate(individual):
             """Reverse the bit of a random index in an individual."""
-            mutate_index = self.random.randrange(len(individual))
-            individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
+            for index, j in enumerate(individual):
+                if random.uniform(0, 1) < self.mutation_probability:
+                    if individual[index] == 1:
+                        individual[index] = 0
+                    else:
+                        individual[index] = 1
+        # def mutate(individual):
+        #     """Reverse the bit of a random index in an individual."""
+        #     mutate_index = self.random.randrange(len(individual))
+        #     individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
 
         def random_selection(population):
             """Select and return a random member of the population."""

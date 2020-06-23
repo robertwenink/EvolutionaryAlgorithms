@@ -19,11 +19,11 @@ for f in files:
 
 #opt for 4 nodes is 14, 8 nodes is 106, 16 is 366, 32 is 1365, 64 4998
 
-#ga_black = GeneticAlgorithm(MaxCut = instances[1], population_size= 10000, generations = 10, crossover_probability=0.8, mutation_probability = 0.2, opt= 1356)
-#ga_black.run()                                    # run the GA
-# print(ga_black.best_individual())              # print the GA's best solution
+ga_black = GeneticAlgorithm(MaxCut = instances[1], population_size= 500, generations = 30, crossover_probability=0.8, mutation_probability = 0.1, opt= 1300)
+ga_black.run()                                    # run the GA
+print(ga_black.best_individual())              # print the GA's best solution
 
-ga_grey = GeneticAlgorithm_grey_box(MaxCut = instances[1], population_size= 10, generations = 10, crossover_probability=0.8, mutation_probability = 0.2, opt=1356, local_k = 100)
+ga_grey = GeneticAlgorithm_grey_box(MaxCut = instances[1], population_size= 20, generations = 20, crossover_probability=0.8, mutation_probability = 0.1, opt=1300, local_k = 10)
 
 #
 
