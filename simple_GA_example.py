@@ -11,6 +11,7 @@ opt_directory = 'opts/'
 sub_directory = ''
 
 files = os.listdir(instances_directory + sub_directory)
+print(files)
 instances = []
 for f in files:
     if f[0] != '.':
@@ -18,8 +19,6 @@ for f in files:
         instances.append(instance)
 
 
-
-ga = GeneticAlgorithm(MaxCut = instances[3], population_size= 500, generations = 10, crossover_probability=0.8, mutation_probability = 0.2, opt= 8900)
-
+ga = GeneticAlgorithm(MaxCut = instances[0], population_size= 1000, generations = 10, crossover_probability=0.8, mutation_probability = 0.2, opt= 345)
 ga.run()                                    # run the GA
 print(ga.best_individual())              # print the GA's best solution
