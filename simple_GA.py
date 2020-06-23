@@ -35,6 +35,7 @@ class GeneticAlgorithm(object):
                  crossover_probability,
                  mutation_probability,
                  opt,
+                 limit_evals,
                  elitism=True,
                  maximise_fitness=True,
                  verbose=False,
@@ -61,6 +62,8 @@ class GeneticAlgorithm(object):
         self.evals = 0
         self.opt_evals = -1
         self.fittest_individual = -1
+        self.limit_evals = limit_evals
+        self.print = True
 
 
         # seed random number generator
@@ -92,18 +95,18 @@ class GeneticAlgorithm(object):
             child_2 = parent_2[:index] + parent_1[index:]
             return child_1, child_2
 
-        def mutate(individual):
-            """Reverse the bit of a random index in an individual."""
-            for index, j in enumerate(individual):
-                if random.uniform(0, 1) < self.mutation_probability:
-                    if individual[index] == 1:
-                        individual[index] = 0
-                    else:
-                        individual[index] = 1
         # def mutate(individual):
         #     """Reverse the bit of a random index in an individual."""
-        #     mutate_index = self.random.randrange(len(individual))
-        #     individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
+        #     for index, j in enumerate(individual):
+        #         if random.uniform(0, 1) < self.mutation_probability:
+        #             if individual[index] == 1:
+        #                 individual[index] = 0
+        #             else:
+        #                 individual[index] = 1
+        def mutate(individual):
+            """Reverse the bit of a random index in an individual."""
+            mutate_index = self.random.randrange(len(individual))
+            individual[mutate_index] = (0, 1)[individual[mutate_index] == 0]
 
         def random_selection(population):
             """Select and return a random member of the population."""
@@ -188,6 +191,10 @@ class GeneticAlgorithm(object):
             if len(new_population) < self.population_size:
                 new_population.append(child_2)
 
+            if self.evals >= self.limit_evals and self.print:
+                print('Blackbox terminated with ' + str(self.evals) + ' fitness ' + str(elite.fitness))
+                self.print = False
+
         if self.elitism:
             new_population[0] = elite
 
@@ -218,12 +225,14 @@ class GeneticAlgorithm(object):
         for _ in range(1, self.generations):
             self.create_next_generation()
 
+
+
     def best_individual(self):
         """Return the individual with the best fitness in the current
         generation.
         """
         best = self.current_generation[0]
-        return (best.fitness, best.genes, self.opt_evals, self.fittest_individual)
+        return (best.fitness, best.genes, self.opt_evals, self.evals)
 
 
 

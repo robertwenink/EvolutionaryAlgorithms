@@ -38,6 +38,7 @@ class GeneticAlgorithm_grey_box(object):
                  mutation_probability,
                  opt,
                  local_k,
+                 limit_evals,
                  elitism=True,
                  maximise_fitness=True,
                  verbose=False,
@@ -65,6 +66,8 @@ class GeneticAlgorithm_grey_box(object):
         self.opt_evals = -1
         self.fittest_individual = -1
         self.local_k =local_k
+        self.limit_evals = limit_evals
+        self.print = True
 
 
         # seed random number generator
@@ -250,6 +253,10 @@ class GeneticAlgorithm_grey_box(object):
             #if child_1 not in new_population:
             new_population.append(child_1)
 
+            if self.evals >= self.limit_evals and self.print:
+                print('Greybox terminated with ' + str(self.evals) + ' fitnes ' + str(elite.fitness))
+                self.print = False
+
             # if len(new_population) < self.population_size:
             #     child_2.fitness = self.fitness_function(np.asarray(child_2.genes))
             #     self.evals += 1
@@ -294,7 +301,7 @@ class GeneticAlgorithm_grey_box(object):
         generation.
         """
         best = self.current_generation[0]
-        return (best.fitness, best.genes, self.opt_evals)
+        return (best.fitness, best.genes, self.opt_evals, self.evals)
 
 
 

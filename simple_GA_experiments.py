@@ -17,15 +17,53 @@ for f in files:
         instance = MaxCut(f, instances_directory, opt_directory)
         instances.append(instance)
 
-#opt for 4 nodes is 14, 8 nodes is 106, 16 is 366, 32 is 1365, 64 4998
+#opt for 4 nodes is 27, 8 nodes is 145, 16 is 412, 32 is 1365, 64 4998
+problem = instances[5]
+opt = 145
+popsize = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+pop_black = 500
+pop_grey = 10
+for j in popsize:
+    count = 0
+    for i in range(10):
+        ga_black = GeneticAlgorithm(MaxCut=problem, population_size=j, generations=5, crossover_probability=0.8,
+                                    mutation_probability=0.1, opt=opt, limit_evals=1000000)
+        ga_black.run()
+        # print('Blackbox' + str(ga_black.best_individual()))            # print the GA's best solution
+        # print(ga_black.best_individual()[3])
+        if ga_black.best_individual()[0] == opt:
+            count += 1
+    if count == 10:
+        print(j)
+        pop_black = j
+        break
 
-ga_black = GeneticAlgorithm(MaxCut = instances[1], population_size= 500, generations = 30, crossover_probability=0.8, mutation_probability = 0.1, opt= 1300)
-ga_black.run()                                    # run the GA
-print(ga_black.best_individual())              # print the GA's best solution
+popsize_grey = [2, 4, 8, 16, 32]
+for j in popsize_grey:
+    count = 0
+    for i in range(10):
+        ga_grey = GeneticAlgorithm_grey_box(MaxCut=problem, population_size=j, generations=5, crossover_probability=0.8,
+                                            mutation_probability=0.1, opt=opt, local_k=j, limit_evals=1000000)
+        ga_grey.run()
+        # print('Blackbox' + str(ga_black.best_individual()))            # print the GA's best solution
+        # print(ga_black.best_individual()[3])
+        if ga_grey.best_individual()[0] == opt:
+            count += 1
+    if count == 10:
+        print(j)
+        pop_grey = j
+        break
 
-ga_grey = GeneticAlgorithm_grey_box(MaxCut = instances[1], population_size= 20, generations = 20, crossover_probability=0.8, mutation_probability = 0.1, opt=1300, local_k = 10)
 
-#
 
-ga_grey.run()                                    # run the GA
-print(ga_grey.best_individual())              # print the GA's best solution
+for i in range(10):
+    ga_black = GeneticAlgorithm(MaxCut=problem, population_size=pop_black, generations=5, crossover_probability=0.8,
+                                mutation_probability=0.1, opt=opt, limit_evals=1000000)
+    ga_grey = GeneticAlgorithm_grey_box(MaxCut=problem, population_size=pop_grey, generations=5, crossover_probability=0.8,
+                                        mutation_probability=0.1, opt=opt, local_k=pop_grey, limit_evals=1000000)
+    ga_black.run()
+    # run the GA
+    print('Blackbox' + str(ga_black.best_individual()))            # print the GA's best solution
+
+    ga_grey.run()                                    # run the GA
+    print('Greybox' + str(ga_grey.best_individual()))            # print the GA's best solution
