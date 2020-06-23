@@ -36,6 +36,7 @@ def main(instances_directory, opt_directory, sub_directory):
     # FGA.run()
     # print(f'{time() - t} seconds')
 
+<<<<<<< HEAD
 def filename_generator(n, w, p, r, prefix=''):
     return f'n-{n}-w-{w}-p-{p}-r-{r}' if prefix == '' else f'{prefix}-n-{n}-w-{w}-p-{p}-r-{r}'
 
@@ -69,6 +70,23 @@ def get_random_instances(directory):
                     names.append(filename)
 
     return instances, names
+=======
+    
+
+
+def random_instance():
+
+    instance = NP_MaxCut_Random(nodes=500, max_weight=200, edge_prob=0.5)
+
+    instance.write_to_file('testname1', 'testdirectory')
+
+    instance2 = NP_MaxCut_From_File('testname1', 'testdirectory')
+
+    instances = NP_MaxCut_From_File.retrieve_all_instances_from_directory('testdirectory')
+
+    # BPSO_GBO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run(GBO=True)
+    BPSO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run()
+>>>>>>> 3fa27535bc5f3ec77a7ba3efd3261cc2e04e25bf
     
 def run_instances(names, instances):
 
