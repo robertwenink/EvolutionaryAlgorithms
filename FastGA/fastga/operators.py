@@ -100,6 +100,35 @@ class FastMutationOperator(BaseMutationOperator):
         r = sample(self.power_law)
         return r / self.n
 
+class GreyBoxFastGA(FastMutationOperator):
+    def _mutate(self, bit_string, index):
+        """
+        Private 'mutate' method, not to be called externally. Performs an inplace mutation of
+        the input bit string. A naive implementation would be to go through the n bits of the
+        bit string and flip them with probability given by the mutation rate.
+        Alternatively, one can sample the indexes of bits to flip, and flip exactly those. This
+        is what we do here.
+        """
+        # TODO: Add loop for multiple indexes
+        flip(bit_string, index)
+
+    def mutate(self, bit_string, index, inplace=False):
+        """
+        Public 'mutate' method ; can perform the mutation inplace or return a (new)
+        mutated bit string.
+        """
+        n = self.n
+        bit_string_len = len(bit_string)
+        if not bit_string_len == n:
+            raise ValueError("Wrong length for input bit string : expected {}, got {}."
+                    .format(n, bit_string_len))
+            if not inplace:
+                bit_string = bit_string.copy()
+        self._mutate(bit_string, index)
+        if not inplace:
+            return bit_string
+
+
 
 if __name__ == '__main__':
     fast = FastMutationOperator(10, 1.5)
