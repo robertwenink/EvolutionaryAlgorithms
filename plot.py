@@ -4,124 +4,109 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-DATA_ROOT = 'river-swim/'
+hp_example = {
+    'num_particles' : 0,
+    'nodes': 0,
+    'maxweight': 0,
+    'edgeprob': 0.0,
+    'GBO': False,
+    'local_search': False,
+    'norm_velo': False,
+}
 
-NUM_RESULTS = 250
+def get_params_from_metrics_filename(filename):
+    hyper_params = {}
+    temp = filename
+    temp = temp.replace('.dat', '')
+    if len(temp.split('/')) > 1:
+        temp = temp.split('/')[-1]
+    for par in temp.split(']'):
+        if len(par) > 0:
+            if par.split('[')[0] in hp_example:
+                t = type(hp_example[par.split('[')[0]])
+                if t == bool:
+                    hyper_params[par.split('[')[0]] = par.split('[')[1] == 'True'
+                else:
+                    hyper_params[par.split('[')[0]] = t(par.split('[')[1])
+            else:
+                hyper_params[par.split('[')[0]] = par.split('[')[1]
+    return hyper_params
 
-###################### MBIE & EB #####################
-baseline_files = glob.glob(DATA_ROOT + '/*.dat')
-mbie = {}
-mbie_eb = {}
+def fill_dict_with_dat(dict, data, columns):
+    if metric not in dict:
+        dict[metric] = {}
+    if hyper_params[row_params] not in dict[metric]:
+        dict[metric][hyper_params[row_params]] = {}
+    if hyper_params[col_params] not in dict[metric][hyper_params[row_params]]:
+        dict[metric][hyper_params[row_params]][hyper_params[col_params]] = {}
+
+    dict[metric][hyper_params[row_params]][hyper_params[col_params]]['mean'] = np.array(data[columns[1]], dtype=float)[slices]
+    dict[metric][hyper_params[row_params]][hyper_params[col_params]]['std_up'] = np.array(data[columns[2]], dtype=float)[slices]
+    dict[metric][hyper_params[row_params]][hyper_params[col_params]]['std_down'] = np.array(data[columns[3]], dtype=float)[slices]
+
+DATA_ROOT = 'metrics-PSO/'
+
+NUM_RESULTS = 15000
+
+stepsize = 100
+
+NUM_RESULTS_LEFT = int(NUM_RESULTS/stepsize)
+
+slices = np.arange(NUM_RESULTS) % stepsize == 0
+
+BBO = {}
+GBO = {}
+local_search = {}
+GBO_local_search = {}
+
+###################### files #####################
+
+baseline_files = glob.glob(DATA_ROOT + '*.dat')
+
+metric = 'fitness'
+ylabel = 'Max Cut Fitness'
+xlabel = 'Evaluations'
+
+# ADAPT FOR YOUR PARAMS
+row_params = 'nodes'
+row_values = [50, 100, 250, 500]
+row_labels = 'n'
+col_params = 'num_particles'
+col_values = [25, 50, 100, 250]
+col_labels = 'S'
+
 for file in baseline_files:
 
-    # File is mbie-eb.
-    if file.startswith('river-swim/mbie-eb'):
-        metric = file.replace('river-swim/mbie-eb_', '').replace('.dat', '')
-        if metric not in (
-            'sample_complexity','coverage_error_squared_R', 'reward_timeline', 'state_action_count'):
-            data = pd.read_csv(file, sep = r'\t+', engine = 'python')
-            columns = np.array(data.columns)
-            mbie_eb[metric] = {}
-            mbie_eb[metric]['mean'] = np.array(data[columns[1]])
-            mbie_eb[metric]['std_up'] = np.array(data[columns[2]])
-            mbie_eb[metric]['std_down'] = np.array(data[columns[3]])
+    hyper_params = get_params_from_metrics_filename(file)
 
-    # File is mbie.
-    else:
-        metric = file.replace('river-swim/mbie_', '').replace('.dat', '')
-        if metric not in (
-            'sample_complexity','coverage_error_squared_R', 'reward_timeline', 'state_action_count'):
-            data = pd.read_csv(file, sep = r'\t+', engine = 'python')
-            columns = np.array(data.columns)
-            mbie[metric] = {}
-            mbie[metric]['mean'] = np.array(data[columns[1]], dtype=float)
-            mbie[metric]['std_up'] = np.array(data[columns[2]], dtype=float)
-            mbie[metric]['std_down'] = np.array(data[columns[3]], dtype=float)
+    data = pd.read_csv(file, sep = r'\t+', engine = 'python')
+    columns = np.array(data.columns)
 
-######################################################
+    # BBO
+    if not hyper_params['GBO'] and not hyper_params['local_search'] and not hyper_params['norm_velo']:
 
-###################### Max- opt ######################
-mediator_max_opt_files = glob.glob(DATA_ROOT + 'mediator-max-opt/*.dat')
-mediator_max_opt = {}
+        fill_dict_with_dat(BBO, data, columns)
 
-for file in mediator_max_opt_files:
-    filename = file.replace(
-        'river-swim/mediator-max-opt/mediator-max-opt-', '')
-    info = filename.split('-')
-    offset = float(info[0])
-    rho = float(info[1].split('_')[0])
-    metric = info[1].replace(f'{str(rho)}_', '').replace('.dat', '')
-    if metric not in (
-        'sample_complexity','coverage_error_squared_R', 'reward_timeline', 'state_action_count'):
-        data = pd.read_csv(file, sep = r'\t+', engine = 'python')
-        columns = np.array(data.columns)
+    # GBO
+    elif hyper_params['GBO'] and not hyper_params['local_search'] and not hyper_params['norm_velo']:
 
-        # Traverse to find right dict.
-        if metric not in mediator_max_opt:
-            mediator_max_opt[metric] = {}
-        if offset not in mediator_max_opt[metric]:
-            mediator_max_opt[metric][offset] = {}
-        if rho not in mediator_max_opt[metric][offset]:
-            mediator_max_opt[metric][offset][rho] = {}
+        fill_dict_with_dat(GBO, data, columns)
 
-        mediator_max_opt[metric][offset][rho]['mean'] = \
-            np.array(data[columns[1]], dtype=float)
-        mediator_max_opt[metric][offset][rho]['std_up'] \
-            = np.array(data[columns[2]], dtype=float)
-        mediator_max_opt[metric][offset][rho]['std_down'] \
-            = np.array(data[columns[3]], dtype=float)
+    # local_search
+    elif not hyper_params['GBO'] and hyper_params['local_search'] and not hyper_params['norm_velo']:
+
+        fill_dict_with_dat(local_search, data, columns)
+
+    # GBO_local_search
+    elif hyper_params['GBO'] and hyper_params['local_search'] and not hyper_params['norm_velo']:
+        
+        fill_dict_with_dat(GBO_local_search, data, columns)
 
 ######################################################
 
-####################### Random #######################
-mediator_random_files = glob.glob(DATA_ROOT + 'mediator-random/*.dat')
-mediator_random = {}
 
-for file in mediator_random_files:
-    filename = file.replace(
-        'river-swim/mediator-random/mediator-random-', '')
-    info = filename.split('-')
-    offset = float(info[0])
-    rho = float(info[1].split('_')[0])
-    metric = info[1].replace(f'{str(rho)}_', '').replace('.dat', '')
-    if metric not in (
-        'sample_complexity','coverage_error_squared_R', 'reward_timeline', 'state_action_count'):
-        data = pd.read_csv(file, sep = r'\t+', engine = 'python')
-        columns = np.array(data.columns)
-
-        # Traverse to find right dict.
-        if metric not in mediator_random:
-            mediator_random[metric] = {}
-        if offset not in mediator_random[metric]:
-            mediator_random[metric][offset] = {}
-        if rho not in mediator_random[metric][offset]:
-            mediator_random[metric][offset][rho] = {}
-
-        mediator_random[metric][offset][rho]['mean'] = \
-            np.array(data[columns[1]])
-        mediator_random[metric][offset][rho]['std_up'] \
-            = np.array(data[columns[2]])
-        mediator_random[metric][offset][rho]['std_down'] \
-            = np.array(data[columns[3]])
-
-######################################################
-
-metric = 'cumulative_instantaneous_loss' # CHANGE FOR PLOT.
-xlabel = 'Cumulative instantaneous loss'
-
-# metric = 'cumulative_rewards' # CHANGE FOR PLOT.
-# xlabel = 'Cumulative reward'
-
-# metric = 'coverage_error_squared_T' # CHANGE FOR PLOT.
-# xlabel = 'Coverage error transition probability'
-
-
-# offsets = [1.0]
-offsets = [0, 0.1, 0.2, 0.3]
-rhos = [0.02, 0.08, 0.16, 0.32]
-
-NUM_ROWS = len(offsets) # offset
-NUM_COLS = len(rhos) # rho
+NUM_ROWS = len(row_values)
+NUM_COLS = len(col_values)
 
 font_size = 14
 
@@ -133,99 +118,138 @@ plt.rcParams.update(params)
 
 
 fig, axs = plt.subplots(
-    NUM_ROWS, NUM_COLS, sharex=True, sharey=True)
+    NUM_ROWS, NUM_COLS, sharey='row') #, sharey=True
 for r in range(NUM_ROWS):
     for c in range(NUM_COLS):
-        rho = rhos[c]
-        offset = offsets[r]
-        max_opt = mediator_max_opt[metric][offset][rho]['mean'][:NUM_RESULTS]
-        random = mediator_random[metric][offset][rho]['mean'][:NUM_RESULTS]
-        mbie_data = mbie[metric]['mean'][:NUM_RESULTS]
-        mbie_eb_data = mbie_eb[metric]['mean'][:NUM_RESULTS]
-        index = range(NUM_RESULTS)
 
-        max_opt_std_up = mediator_max_opt[metric][offset][rho]['std_up'][:NUM_RESULTS]
-        max_opt_std_down = mediator_max_opt[metric][offset][rho]['std_down'][:NUM_RESULTS]
-        random_std_up = mediator_random[metric][offset][rho]['std_up'][:NUM_RESULTS]
-        random_std_down = mediator_random[metric][offset][rho]['std_down'][:NUM_RESULTS]
-        mbie_data_std_up = mbie[metric]['std_up'][:NUM_RESULTS]
-        mbie_data_std_down = mbie[metric]['std_down'][:NUM_RESULTS]
-        mbie_eb_data_std_up = mbie_eb[metric]['std_up'][:NUM_RESULTS]
-        mbie_eb_data_std_down = mbie_eb[metric]['std_down'][:NUM_RESULTS]
+        r_val = row_values[r]
+        c_val = col_values[c]
+
+        if metric in BBO:
+            BBO_mean = BBO[metric][r_val][c_val]['mean'][:NUM_RESULTS_LEFT]
+            BBO_std_up = BBO[metric][r_val][c_val]['std_up'][:NUM_RESULTS_LEFT]
+            BBO_std_down = BBO[metric][r_val][c_val]['std_down'][:NUM_RESULTS_LEFT]
+        
+        if metric in GBO:
+            GBO_mean = GBO[metric][r_val][c_val]['mean'][:NUM_RESULTS_LEFT]
+            GBO_std_up = GBO[metric][r_val][c_val]['std_up'][:NUM_RESULTS_LEFT]
+            GBO_std_down = GBO[metric][r_val][c_val]['std_down'][:NUM_RESULTS_LEFT]
+
+        if metric in local_search:
+            local_search_mean = local_search[metric]['mean'][:NUM_RESULTS_LEFT]
+            local_search_data_std_up = local_search[metric]['std_up'][:NUM_RESULTS_LEFT]
+            local_search_data_std_down = local_search[metric]['std_down'][:NUM_RESULTS_LEFT]
+
+        if metric in GBO_local_search:
+            GBO_local_search_mean = GBO_local_search[metric]['mean'][:NUM_RESULTS_LEFT]
+            GBO_local_search_data_std_up = GBO_local_search[metric]['std_up'][:NUM_RESULTS_LEFT]
+            GBO_local_search_data_std_down = GBO_local_search[metric]['std_down'][:NUM_RESULTS_LEFT]
+
+        index = np.arange(NUM_RESULTS)[slices]
 
         if NUM_ROWS == 1 and NUM_COLS == 1:
             # Plot the sds.
-            axs.fill_between(
-                index, max_opt_std_down, max_opt_std_up, color = 'red', alpha = 0.1)
-            axs.fill_between(
-                index, random_std_down, random_std_up, color = 'orange', alpha = 0.1)
-            axs.fill_between(
-                index, mbie_data_std_down, mbie_data_std_up, color = 'blue', alpha = 0.1)
-            axs.fill_between(
-                index, mbie_eb_data_std_down, mbie_eb_data_std_up, color = 'cyan', alpha = 0.1)
+            if metric in BBO:
+                axs.fill_between(
+                    index, BBO_std_down, BBO_std_up, color = 'red', alpha = 0.1)
+            if metric in GBO:
+                axs.fill_between(
+                    index, GBO_std_down, GBO_std_up, color = 'orange', alpha = 0.1)
+            if metric in local_search:
+                axs.fill_between(
+                    index, local_search_data_std_down, local_search_data_std_up, color = 'blue', alpha = 0.1)
+            if metric in GBO_local_search:
+                axs.fill_between(
+                    index, GBO_local_search_data_std_down, GBO_local_search_data_std_up, color = 'cyan', alpha = 0.1)
 
             # Plot the means.
-            sns.lineplot(x = index, y = max_opt, ax = axs[c], color = 'red', alpha = 0.6, label='Max-Opt')
-            sns.lineplot(x = index, y = random, ax = axs[c], color = 'orange', alpha = 0.6, label='Random')
-            sns.lineplot(x = index, y = mbie_data, ax = axs[c], color = 'blue', alpha = 0.6, label='MBIE')
-            sns.lineplot(x = index, y = mbie_eb_data, ax = axs[c], color = 'cyan', alpha = 0.6, label='MBIE-EB')
-            subplot_title = r'($\kappa=$' + f'{offset}' + r', $\rho=$' + f'{rho}' + ')'
+            if metric in BBO:
+                sns.lineplot(x = index, y = BBO_mean, ax = axs, color = 'red', alpha = 0.6, label='BBO')
+            if metric in GBO:
+                sns.lineplot(x = index, y = GBO_mean, ax = axs, color = 'orange', alpha = 0.6, label='GBO')
+            if metric in local_search:
+                sns.lineplot(x = index, y = local_search_mean, ax = axs, color = 'blue', alpha = 0.6, label='Local search')
+            if metric in GBO_local_search:
+                sns.lineplot(x = index, y = GBO_local_search_mean, ax = axs, color = 'cyan', alpha = 0.6, label='GBO & Local search')
+            subplot_title = f'({row_labels} = {r_val}, {col_labels} = {c_val})'
             axs.set_title(subplot_title, fontsize = font_size)
             axs.get_legend().remove()
+            axs.set(yscale='log')
 
             handles, labels = axs.get_legend_handles_labels()
 
 
-        if NUM_ROWS == 1:
+        elif NUM_ROWS == 1 or NUM_COLS == 1:
+            x = max(r,c)
             # Plot the sds.
-            axs[c].fill_between(
-                index, max_opt_std_down, max_opt_std_up, color = 'red', alpha = 0.1)
-            axs[c].fill_between(
-                index, random_std_down, random_std_up, color = 'orange', alpha = 0.1)
-            axs[c].fill_between(
-                index, mbie_data_std_down, mbie_data_std_up, color = 'blue', alpha = 0.1)
-            axs[c].fill_between(
-                index, mbie_eb_data_std_down, mbie_eb_data_std_up, color = 'cyan', alpha = 0.1)
+            if metric in BBO:
+                axs[x].fill_between(
+                    index, BBO_std_down, BBO_std_up, color = 'red', alpha = 0.1)
+            if metric in GBO:
+                axs[xlabel].fill_between(
+                    index, GBO_std_down, GBO_std_up, color = 'orange', alpha = 0.1)
+            if metric in local_search:
+                axs[x].fill_between(
+                    index, local_search_data_std_down, local_search_data_std_up, color = 'blue', alpha = 0.1)
+            if metric in GBO_local_search:
+                axs[x].fill_between(
+                    index, GBO_local_search_data_std_down, GBO_local_search_data_std_up, color = 'cyan', alpha = 0.1)
 
             # Plot the means.
-            sns.lineplot(x = index, y = max_opt, ax = axs[c], color = 'red', alpha = 0.6, label='Max-Opt')
-            sns.lineplot(x = index, y = random, ax = axs[c], color = 'orange', alpha = 0.6, label='Random')
-            sns.lineplot(x = index, y = mbie_data, ax = axs[c], color = 'blue', alpha = 0.6, label='MBIE')
-            sns.lineplot(x = index, y = mbie_eb_data, ax = axs[c], color = 'cyan', alpha = 0.6, label='MBIE-EB')
-            subplot_title = r'($\kappa=$' + f'{offset}' + r', $\rho=$' + f'{rho}' + ')'
-            axs[c].set_title(subplot_title, fontsize = font_size)
-            axs[c].get_legend().remove()
+            if metric in BBO:
+                sns.lineplot(x = index, y = BBO_mean, ax = axs[x], color = 'red', alpha = 0.6, label='BBO')
+            if metric in GBO:
+                sns.lineplot(x = index, y = GBO_mean, ax = axs[x], color = 'orange', alpha = 0.6, label='GBO')
+            if metric in local_search:
+                sns.lineplot(x = index, y = local_search_mean, ax = axs[x], color = 'blue', alpha = 0.6, label='Local search')
+            if metric in GBO_local_search:
+                sns.lineplot(x = index, y = GBO_local_search_mean, ax = axs[x], color = 'cyan', alpha = 0.6, label='GBO & Local search')
+            subplot_title = f'({row_labels} = {r_val}, {col_labels} = {c_val})'
+            axs[x].set_title(subplot_title, fontsize = font_size)
+            axs[x].get_legend().remove()
+            axs[x].set(yscale='log')
 
-            handles, labels = axs[c].get_legend_handles_labels()
+            handles, labels = axs.get_legend_handles_labels()
 
         else:
             # Plot the sds.
-            axs[r, c].fill_between(
-                index, max_opt_std_down, max_opt_std_up, color = 'red', alpha = 0.1)
-            axs[r, c].fill_between(
-                index, random_std_down, random_std_up, color = 'orange', alpha = 0.1)
-            axs[r, c].fill_between(
-                index, mbie_data_std_down, mbie_data_std_up, color = 'blue', alpha = 0.1)
-            axs[r, c].fill_between(
-                index, mbie_eb_data_std_down, mbie_eb_data_std_up, color = 'cyan', alpha = 0.1)
+            if metric in BBO:
+                axs[r, c].fill_between(
+                    index, BBO_std_down, BBO_std_up, color = 'red', alpha = 0.1)
+            if metric in GBO:
+                axs[r, c].fill_between(
+                    index, GBO_std_down, GBO_std_up, color = 'orange', alpha = 0.1)
+            if metric in local_search:
+                axs[r, c].fill_between(
+                    index, local_search_data_std_down, local_search_data_std_up, color = 'blue', alpha = 0.1)
+            if metric in GBO_local_search:
+                axs[r, c].fill_between(
+                    index, GBO_local_search_data_std_down, GBO_local_search_data_std_up, color = 'cyan', alpha = 0.1)
 
             # Plot the means.
-            sns.lineplot(x = index, y = max_opt, ax = axs[r, c], color = 'red', alpha = 0.6, label='Max-Opt')
-            sns.lineplot(x = index, y = random, ax = axs[r, c], color = 'orange', alpha = 0.6, label='Random')
-            sns.lineplot(x = index, y = mbie_data, ax = axs[r, c], color = 'blue', alpha = 0.6, label='MBIE')
-            sns.lineplot(x = index, y = mbie_eb_data, ax = axs[r, c], color = 'cyan', alpha = 0.6, label='MBIE-EB')
-            subplot_title = r'($\kappa=$' + f'{offset}' + r', $\rho=$' + f'{rho}' + ')'
+            if metric in BBO:
+                sns.lineplot(x = index, y = BBO_mean, ax = axs[r, c], color = 'red', alpha = 0.6, label='BBO')
+            if metric in GBO:
+                sns.lineplot(x = index, y = GBO_mean, ax = axs[r, c], color = 'orange', alpha = 0.6, label='GBO')
+            if metric in local_search:
+                sns.lineplot(x = index, y = local_search_mean, ax = axs[r, c], color = 'blue', alpha = 0.6, label='Local search')
+            if metric in GBO_local_search:
+                sns.lineplot(x = index, y = GBO_local_search_mean, ax = axs[r, c], color = 'cyan', alpha = 0.6, label='GBO & Local search')
+            subplot_title = f'({row_labels} = {r_val}, {col_labels} = {c_val})'
             axs[r, c].set_title(subplot_title, fontsize = font_size)
             axs[r, c].get_legend().remove()
+            axs[r, c].set(yscale='log')
 
             handles, labels = axs[r, c].get_legend_handles_labels()
+
+
 fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 1), ncol=4, fontsize=f'{font_size}')
 
 plt.subplots_adjust(top=0.92, right=0.98)
 
-plt.ticklabel_format(style='scientific', axis='y', scilimits=(0, 3))
+# plt.ticklabel_format(style='scientific', axis='y', scilimits=(0, 3))
 fig.tight_layout(pad=0.003)
 # fig.suptitle(, size=font_size, y=0.95)
-fig.text(0.5, 0.005, 'Number of steps', ha='center', fontsize = font_size)
-fig.text(0.003, 0.5, xlabel, va='center', rotation='vertical', fontsize = font_size)
+fig.text(0.5, 0.005, xlabel, ha='center', fontsize = font_size)
+fig.text(0.003, 0.5, ylabel, va='center', rotation='vertical', fontsize = font_size)
 plt.show()
