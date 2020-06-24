@@ -9,6 +9,10 @@ import pathlib
 class Metrics:
 
     def __init__(self, name, no_runs, no_evals, hyper_params={}):
+        '''
+        Metrics class that remembers the fitness per evaluation
+
+        '''
 
         self.name = name
 
@@ -28,6 +32,13 @@ class Metrics:
 
         
     def update_metrics(self, run, no_eval = None, update_prev = False):
+        '''
+        Updates the metrics
+
+        :param no_eval: if not given defaults to self.evaluations[run]
+        :param update_prev: if true, updates all previous fitness per evaluation
+        :return: True if the evaluation exceeded the max number of evaluations -> Done
+        '''
 
         if no_eval == None:
             no_eval = self.evaluations[run]
@@ -35,7 +46,8 @@ class Metrics:
         new_val = self.best_fitness_function()
 
         if update_prev:
-            self.update_evals_up_to_current_eval(run, no_eval)
+            for i in range(min(self.last_eval, self.num_evaluations), min(no_eval, self.num_evaluations)):
+                self.fitness[run, i] = self.last_val
 
         if no_eval >= self.num_evaluations:
             return True
@@ -46,15 +58,13 @@ class Metrics:
         return False
 
 
-    def update_evals_up_to_current_eval(self, run, no_eval):
-
-        for i in range(min(self.last_eval, self.num_evaluations), min(no_eval, self.num_evaluations)):
-
-            self.fitness[run, i] = self.last_val
-
-
     @staticmethod
     def write_to_file(directory, list_of_metric_objects = [], prefix='metric'):
+        '''
+        Write the metrics objects to file, uses all metrics given in mean_metrics
+
+        '''
+
         mean_metrics = {
             'fitness' : ['evaluation', 'fitness'],
         }

@@ -19,15 +19,15 @@ def main(instances_directory, opt_directory, sub_directory):
             instances.append(instance)
 
     
-    BPSO = BinaryParticleSwarmOptimization(instances[2], 300, 2000)
+    # BPSO = BinaryParticleSwarmOptimization(instances[2], 300, 2000)
 
-    t = time()
-    BPSO.np_run(False, False, False, 5)
-    print(f'{time() - t} seconds\n')
+    # t = time()
+    # BPSO.np_run(False, False, False, 5)
+    # print(f'{time() - t} seconds\n')
 
-    t = time()
-    BPSO.np_run()
-    print(f'{time() - t} seconds\n')
+    # t = time()
+    # BPSO.np_run()
+    # print(f'{time() - t} seconds\n')
 
     # TODO
     # Call solvers

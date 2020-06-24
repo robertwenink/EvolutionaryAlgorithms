@@ -163,6 +163,10 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
         return self.metrics.update_metrics(self.run, None, True)
 
     def local_search_genotype(self, genotype):
+        '''
+        Performes local search algorithm according to EDU PSO MacCut paper
+        
+        '''
         
         x_best = genotype.copy()
         x_best_fit = self.instance.np_fitness(x_best, self.metrics, self.run)
