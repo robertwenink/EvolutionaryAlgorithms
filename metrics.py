@@ -8,53 +8,55 @@ import pathlib
 
 class Metrics:
 
-    def __init__(self, name, no_runs, no_evals, epochs=None, hyper_params={}):
+    def __init__(self, name, no_runs, no_evals, hyper_params={}):
 
         self.name = name
 
-        self.fitness = np.zeros((no_runs, no_evals))
+        self.num_evaluations = no_evals
+
+        self.fitness = np.zeros((no_runs, self.num_evaluations))
 
         # Needs to be set 
-        self.best_fitness_function
+        self.best_fitness_function = ()
 
         self.params = hyper_params
 
-        if epochs is not None:
-            # Used when evaluating counting fitness by evaluations per epoch
-            self.last_epoch_eval = 0
-            self.last_epoch_val = 0
-            self.evals_epoch_fitness = np.zeros((no_runs, no_evals))
+        self.evaluations = np.zeros((no_runs), dtype=np.int)
 
-            self.epoch_fitness = np.zeros((no_runs, epochs))
+        self.last_eval = 0
+        self.last_val = 0
 
         
-    def update_metrics(self, run, no_eval):
+    def update_metrics(self, run, no_eval = None, update_prev = False):
 
-        self.fitness[run, no_eval] = self.best_fitness_function()
-
-    def update_metrics_evals_per_epoch(self, run, no_eval):
-
-        for i in range(np.max(self.last_epoch_eval + 1, self.evals_epoch_fitness.shape[1]),
-            np.max(no_eval, self.evals_epoch_fitness.shape[1])):
-
-            self.evals_epoch_fitness[run, i] = self.last_epoch_val
-
+        if no_eval == None:
+            no_eval = self.evaluations[run]
+        
         new_val = self.best_fitness_function()
-        if no_eval < self.evals_epoch_fitness.shape[1]:
-            self.evals_epoch_fitness[run, no_eval] = new_val
-            self.last_epoch_eval = no_eval
-            self.last_epoch_val = new_val
 
-    def update_metrics_per_epoch(self, run, epoch):
-        
-        self.epoch_fitness[run, epoch] = self.best_fitness_function()
+        if update_prev:
+            self.update_evals_up_to_current_eval(run, no_eval)
+
+        if no_eval >= self.num_evaluations:
+            return True
+
+        self.fitness[run, no_eval] = new_val
+        self.last_eval = no_eval
+        self.last_val = new_val
+        return False
+
+
+    def update_evals_up_to_current_eval(self, run, no_eval):
+
+        for i in range(min(self.last_eval, self.num_evaluations), min(no_eval, self.num_evaluations)):
+
+            self.fitness[run, i] = self.last_val
+
 
     @staticmethod
-    def write_to_file(directory, list_of_metric_objects = [], prefix=''):
+    def write_to_file(directory, list_of_metric_objects = [], prefix='metric'):
         mean_metrics = {
             'fitness' : ['evaluation', 'fitness'],
-            'epoch_fitness' : ['epoch', 'fitness'],
-            'evals_epoch_fitness' : ['evaluation', 'fitness']
         }
 
         if directory == '' or len(list_of_metric_objects) == 0:
@@ -70,7 +72,7 @@ class Metrics:
             os.chdir(BASE_PATH)
             os.chdir(directory)
 
-            filename = f'{metric}.dat' if prefix == '' else f'{prefix}_{metric}.dat'
+            filename = f'{metric}.dat' if prefix == '' else f'{prefix}metric[{metric}].dat'
 
             if os.path.exists(filename):
                 os.remove(filename)

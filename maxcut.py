@@ -60,7 +60,7 @@ class MaxCut:
         # print(temp1, temp2)
     
 
-    def np_fitness(self, genotype, counter = None):
+    def np_fitness(self, genotype, metrics = None, run = None):
         '''
         Method for calculating fitness given genotype as input \n
         Input: list or np.array of bits \n
@@ -68,11 +68,11 @@ class MaxCut:
 
         '''
 
-        if counter is not None: counter += 1
+        if metrics is not None: metrics.evaluations[run] += 1
         return np.einsum('i, ik, k', genotype, self.fast_fit, genotype == 0)
 
 
-    def fitness(self, genotype, counter = None):
+    def fitness(self, genotype, metrics = None, run = None):
         '''
         Method for calculating fitness given genotype as input
         Input: list or np.array of bits
@@ -80,7 +80,7 @@ class MaxCut:
 
         '''
 
-        if counter is not None: counter += 1
+        if metrics is not None: metrics.evaluations[run] += 1
         objective = 0
         for edge in self.edges_tuples:
             if genotype[edge[0]] != genotype[edge[1]]:
@@ -90,14 +90,14 @@ class MaxCut:
         # objective = objective / float(self.opt)
         return np.int64(objective)
 
-    def np_fitness_population(self, genotypes, counter = None):
+    def np_fitness_population(self, genotypes, metrics = None, run = None):
         '''
         Method for calculating fitness for numpy array of genotypes
         We can change the matrix multiplication because fast_fit is symmetric
 
         '''
         # old = np.diagonal(np.matmul(genotypes, np.matmul(self.fast_fit, np.transpose(genotypes == 0))))
-        if counter is not None: counter += genotypes.shape[0]
+        if metrics is not None: metrics.evaluations[run] += genotypes.shape[0]
         return np.einsum('ij,jk,ik->i', genotypes, self.fast_fit, genotypes == 0)
 
     def np_generate_random_genotype(self):
@@ -133,10 +133,10 @@ class MaxCut:
 
         :param genotype: genotype
         '''
-        return np.sum(self.fast_fit[bit][genotype != genotype[bit]]) - np.sum(self.fast_fit[bit][genotype == genotype[bit]])
+        return np.sum(self.fast_fit[bit][genotype == genotype[bit]]) - np.sum(self.fast_fit[bit][genotype != genotype[bit]])
 
 
-    def np_calculate_all_bits_flip_value(self, genotype):
+    def np_calculate_all_bits_flip_value(self, genotype, metrics = None, run = None):
         '''
         Calculates bit flip value of entire genotype, basically a local search
 
@@ -144,7 +144,8 @@ class MaxCut:
 
         :return: array of values of bitflip
         '''
-        return np.sum(self.fast_fit * (genotype != genotype[:, np.newaxis]) - self.fast_fit * (genotype == genotype[:, np.newaxis]), axis=1)
+        if metrics is not None: metrics.evaluations[run] += 1
+        return np.sum(self.fast_fit * (genotype == genotype[:, np.newaxis]) - self.fast_fit * (genotype != genotype[:, np.newaxis]), axis=1)
 
 
     def np_calculate_all_bits_flip_value_population(self, population):
@@ -160,23 +161,23 @@ class MaxCut:
         return temp
 
 
-    def np_local_search_genotype(self, genotype, counter = None):
+    def np_local_search_genotype(self, genotype, metrics = None, run = None):
         '''
         Calculate local search optimum of genotype
 
         '''
         local_pop = self.np_generate_local_population(genotype)
-        return local_pop[np.argmax(self.np_fitness_population(local_pop, counter))]
+        return local_pop[np.argmax(self.np_fitness_population(local_pop, metrics, run))]
 
 
-    def np_local_search_population(self, population, counter = None):
+    def np_local_search_population(self, population, metrics = None, run = None):
         '''
         Perform local search on current population
 
         '''
         temp = np.zeros_like(population)
         for i, particle in enumerate(population):
-            temp[i] = self.np_local_search_genotype(particle, counter)
+            temp[i] = self.np_local_search_genotype(particle, metrics, run)
         return temp
 
 
@@ -188,79 +189,79 @@ class MaxCut:
         return (np.diag(np.ones((self.length_genotypes))) + genotype) % 2
 
 
-    def calculate_max_spanning_tree_genotype(self):
-        '''
-        Compute the genotype of the maximum spanning tree of the instance.
+    # def calculate_max_spanning_tree_genotype(self):
+    #     '''
+    #     Compute the genotype of the maximum spanning tree of the instance.
 
-        '''
-        max_spanning_tree = minimum_spanning_tree(self.fast_fit * -1).toarray().astype(np.int) < 0
+    #     '''
+    #     max_spanning_tree = minimum_spanning_tree(self.fast_fit * -1).toarray().astype(np.int) < 0
 
-        max_spanning_tree += max_spanning_tree.transpose()
+    #     max_spanning_tree += max_spanning_tree.transpose()
 
-        first_index = np.unravel_index(np.argmax(max_spanning_tree), max_spanning_tree.shape)
+    #     first_index = np.unravel_index(np.argmax(max_spanning_tree), max_spanning_tree.shape)
 
-        return self.calculate_genotype_from_start_node(first_index[0], max_spanning_tree)
+    #     return self.calculate_genotype_from_start_node(first_index[0], max_spanning_tree)
 
 
-    def calculate_max_degree_weight_genotype(self):
-        '''
-        Compute the genotype of the maximum degree weight nodes
+    # def calculate_max_degree_weight_genotype(self):
+    #     '''
+    #     Compute the genotype of the maximum degree weight nodes
 
-        '''
+    #     '''
         
-        self.degree_per_node = np.sum(self.fast_fit, axis=0)[np.newaxis,:]
+    #     self.degree_per_node = np.sum(self.fast_fit, axis=0)[np.newaxis,:]
 
-        self.degree_per_node = np.append(self.degree_per_node, np.sum(self.fast_fit > 0, axis=0)[np.newaxis,:], axis=0)
+    #     self.degree_per_node = np.append(self.degree_per_node, np.sum(self.fast_fit > 0, axis=0)[np.newaxis,:], axis=0)
 
-        self.degree_per_node = np.append(self.degree_per_node, np.arange(self.length_genotypes)[np.newaxis,:], axis=0)
+    #     self.degree_per_node = np.append(self.degree_per_node, np.arange(self.length_genotypes)[np.newaxis,:], axis=0)
 
-        self.degree_per_node = self.degree_per_node[:,np.argsort(self.degree_per_node[0,:])[::-1]]
+    #     self.degree_per_node = self.degree_per_node[:,np.argsort(self.degree_per_node[0,:])[::-1]]
 
-        genotype = np.zeros((self.length_genotypes))
-        genes_set = np.sum(self.fast_fit, axis=1) == 0
-        for i in self.degree_per_node[2,:]:
-            new_genotype = self.calculate_genotype_from_start_node(i, self.fast_fit, genotype.copy(), genes_set.copy())
-            if self.np_fitness(genotype) < self.np_fitness(new_genotype):
-                genotype = new_genotype
-            genes_set[i] = True
+    #     genotype = np.zeros((self.length_genotypes))
+    #     genes_set = np.sum(self.fast_fit, axis=1) == 0
+    #     for i in self.degree_per_node[2,:]:
+    #         new_genotype = self.calculate_genotype_from_start_node(i, self.fast_fit, genotype.copy(), genes_set.copy())
+    #         if self.np_fitness(genotype) < self.np_fitness(new_genotype):
+    #             genotype = new_genotype
+    #         genes_set[i] = True
             
-        return genotype
+    #     return genotype
 
-    def calculate_genotype_from_start_node(self, node, adjacency_matrix, new_genotype = None, genes_set = None):
-        '''
-        Calculates the genotype from an adjacency matrix
+    # def calculate_genotype_from_start_node(self, node, adjacency_matrix, new_genotype = None, genes_set = None):
+    #     '''
+    #     Calculates the genotype from an adjacency matrix
 
-        :param node: starting item
-        :param adjacency_matrix: neighbouring matrix
-        '''
+    #     :param node: starting item
+    #     :param adjacency_matrix: neighbouring matrix
+    #     '''
 
-        if new_genotype is None:
-            new_genotype = np.zeros((self.length_genotypes))
+    #     if new_genotype is None:
+    #         new_genotype = np.zeros((self.length_genotypes))
 
-        if genes_set is None:
-            genes_set = np.sum(adjacency_matrix, axis=1) == 0
+    #     if genes_set is None:
+    #         genes_set = np.sum(adjacency_matrix, axis=1) == 0
 
-        pos = [node]
-        neg = []
-        while not np.all(genes_set):
+    #     pos = [node]
+    #     neg = []
+    #     while not np.all(genes_set):
 
-            if len(pos) + len(neg) == 0:
-                disconnected = np.nonzero(genes_set == 0)
-                pos += [disconnected[0]]
-                # pos = np.append(pos, disconnected[0])
+    #         if len(pos) + len(neg) == 0:
+    #             disconnected = np.nonzero(genes_set == 0)
+    #             pos += [disconnected[0]]
+    #             # pos = np.append(pos, disconnected[0])
 
-            while len(pos) > 0:
-                p = pos.pop(0)
-                genes_set[p] = True
-                new_genotype[p] = 1
-                neg += [y for x in adjacency_matrix[p].nonzero() for y in x if y not in neg and not genes_set[y]]
+    #         while len(pos) > 0:
+    #             p = pos.pop(0)
+    #             genes_set[p] = True
+    #             new_genotype[p] = 1
+    #             neg += [y for x in adjacency_matrix[p].nonzero() for y in x if y not in neg and not genes_set[y]]
                 
-            while len(neg) > 0:
-                n = neg.pop(0)
-                genes_set[n] = True
-                pos += [y for x in adjacency_matrix[:, n].nonzero() for y in x if y not in pos and not genes_set[y]]
+    #         while len(neg) > 0:
+    #             n = neg.pop(0)
+    #             genes_set[n] = True
+    #             pos += [y for x in adjacency_matrix[:, n].nonzero() for y in x if y not in pos and not genes_set[y]]
 
-        return new_genotype
+    #     return new_genotype
 
 
     

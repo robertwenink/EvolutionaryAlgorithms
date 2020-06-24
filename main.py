@@ -36,70 +36,61 @@ def main(instances_directory, opt_directory, sub_directory):
     # FGA.run()
     # print(f'{time() - t} seconds')
 
-<<<<<<< HEAD
-def filename_generator(n, w, p, r, prefix=''):
-    return f'n-{n}-w-{w}-p-{p}-r-{r}' if prefix == '' else f'{prefix}-n-{n}-w-{w}-p-{p}-r-{r}'
+def instance_filename_generator(n, w, p, prefix=''):
+    return f'n-{n}-w-{w}-p-{p}' if prefix == '' else f'{prefix}-n-{n}-w-{w}-p-{p}'
 
-def get_params_from_filename(filename):
+def get_params_from_instance_filename(filename):
     temp = filename
-    r = int(temp.split('-r-')[1])
-    temp = temp.split('-r-')[0]
     p = float(temp.split('-p-')[1])
     temp = temp.split('-p-')[0]
     w = int(temp.split('-w-')[1])
     temp = temp.split('-w-')[0]
-    n = int(temp.split('-n-')[1])
-    temp = temp.split('-n-')[0]
-    return n, w, p ,r
+    n = int(temp.split('n-')[1])
+    return n, w, p
+
+def metrics_filename_generator(hyper_params):
+    string = ''
+    for k, v in hyper_params.items():
+        string += f'{k}[{v}]'
+    return string
+
+def get_params_from_metrics_filename(filename):
+    hyper_params = {}
+    temp = filename
+    if len(temp.split('.')) > 1:
+        temp = temp.split('.')[0]
+    for par in temp.split(']'):
+        hyper_params[par.split('[')[0]] = par.split('[')[1]
+    return hyper_params
 
 def get_random_instances(directory):
 
     instances, names = [], []
 
-    for r in range(10):
-        for n in [250, 500, 1000, 2000]:
-            for w in [200]:
-                for p in [0.25, 0.5, 0.75]:
+    for n in [50, 100, 250, 500]:
+        for w in [100]:
+            for p in [0.5]:
 
-                    filename = filename_generator(n, w, p, r)
-                    if os.path.exists(directory + filename + '.npy'):
-                        instances.append(NP_MaxCut_From_File(filename, directory))
-                    else:
-                        instances.append(NP_MaxCut_Random(nodes=n, max_weight=w, edge_prob=p))
-                        instances[-1].write_to_file(filename, directory)
-                    names.append(filename)
+                filename = instance_filename_generator(n, w, p)
+                if os.path.exists(directory + filename + '.npy'):
+                    instances.append(NP_MaxCut_From_File(filename, directory))
+                else:
+                    instances.append(NP_MaxCut_Random(nodes=n, max_weight=w, edge_prob=p))
+                    instances[-1].write_to_file(filename, directory)
+                names.append(filename)
 
-    return instances, names
-=======
-    
-
-
-def random_instance():
-
-    instance = NP_MaxCut_Random(nodes=500, max_weight=200, edge_prob=0.5)
-
-    instance.write_to_file('testname1', 'testdirectory')
-
-    instance2 = NP_MaxCut_From_File('testname1', 'testdirectory')
-
-    instances = NP_MaxCut_From_File.retrieve_all_instances_from_directory('testdirectory')
-
-    # BPSO_GBO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run(GBO=True)
-    BPSO = BinaryParticleSwarmOptimization(instance, 200, 1000).np_run()
->>>>>>> 3fa27535bc5f3ec77a7ba3efd3261cc2e04e25bf
+    return names, instances
     
 def run_instances(names, instances):
 
-    NO_RUNS = 10
-    NO_EVALS = 1e5
-    NO_EPOCHS = 1e3
-    NO_PARTICLES = [100, 250, 500, 1000]
+    NO_RUNS = 5
+    NO_EVALS = 15000
+    NO_PARTICLES = [25, 50, 100, 250]
 
-    for no_particles in NO_PARTICLES:
-        for i, instance in enumerate(instances):
-            n, w, p, r = get_params_from_filename(names[i])
+    for i, instance in enumerate(instances):
+        for no_particles in NO_PARTICLES:
+            n, w, p = get_params_from_instance_filename(names[i])
 
-            GBO_init = False
             GBO = False
             local_search = False
             norm_velo = False
@@ -110,20 +101,24 @@ def run_instances(names, instances):
                 'maxweight': w,
                 'edgeprob': p,
                 'GBO': GBO,
-                'GBO_init': GBO_init,
                 'local_search': local_search,
                 'norm_velo': norm_velo
             }
-            metrics = Metrics('BPSO_' + names[i], NO_RUNS, NO_EVALS, NO_EPOCHS, hyper_params)
+            metrics = Metrics('BPSO', NO_RUNS, NO_EVALS, hyper_params)
             for run in range(NO_RUNS):
+                metrics.run = run
                 VectorizedBinaryParticleSwarmOptimization(instance, metrics, no_particles, 
-                    r, NO_EPOCHS).np_run(GBO, GBO_init, local_search, norm_velo)
+                    run).np_run(GBO, local_search, norm_velo)
+
+            metrics_file_prefix = metrics_filename_generator(hyper_params)
+            
+            metrics.write_to_file('metrics-PSO', [metrics], metrics_file_prefix)
 
         
 
 if __name__ == '__main__':
     # main(instances_directory, opt_directory, sub_directory)
 
-    names, instances, names = get_random_instances('experiment/')
+    names, instances = get_random_instances('experiment/')
     
     run_instances(names, instances)
