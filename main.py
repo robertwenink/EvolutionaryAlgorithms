@@ -13,13 +13,36 @@ sub_directory = ''
 def main(instances_directory, opt_directory, sub_directory):
     files = os.listdir(instances_directory + sub_directory)
     instances = []
+    NO_RUNS = 1
+    NO_EVALS = 1000
     for f in files:
         if f[0] != '.':
             instance = MaxCut(f, instances_directory, opt_directory)
-            instances.append(instance)
 
+            hp = {                  # DEFAULT VALUES
+                'num_particles' : 50,
+                'c1': 1.0,
+                'c2': 1.0,
+                'v_bound' : 6.0,
+                'nodes': instance.length_genotypes,
+                'maxweight': 100,
+                'edgeprob': 0.4,
+                'GBO': False,
+                'local_search': False
+            }
+
+            metrics = Metrics('BPSO', NO_RUNS, NO_EVALS, hp)
+
+            for run in range(NO_RUNS):
+                metrics.run = run
+                VectorizedBinaryParticleSwarmOptimization(instance, metrics, hp['num_particles'], 
+                            run, hp['c1'], hp['c2'], hp['v_bound']).np_run(hp['GBO'], hp['local_search'])
+            
+            metrics_file_prefix = metrics_filename_generator(hp)
+            
+            metrics.write_to_file('metrics-PSO', [metrics], metrics_file_prefix)
+            
     
-    # BPSO = BinaryParticleSwarmOptimization(instances[2], 300, 2000)
 
     # t = time()
     # BPSO.np_run(False, False, False, 5)
@@ -134,31 +157,24 @@ def run_instances(names, instances):
             experiment_params.append(params)
 
 
-        for hyper_params in experiment_params:
+        for hp in experiment_params:
 
-            no_particles = hyper_params['num_particles']
-            c1 = hyper_params['c1']
-            c2 = hyper_params['c2']
-            v_bound = hyper_params['v_bound']
-            GBO = hyper_params['GBO']
-            local_search = hyper_params['local_search']
-
-            metrics = Metrics('BPSO', NO_RUNS, NO_EVALS, hyper_params)
+            metrics = Metrics('BPSO', NO_RUNS, NO_EVALS, hp)
             
             for run in range(NO_RUNS):
                 metrics.run = run
-                VectorizedBinaryParticleSwarmOptimization(instance, metrics, no_particles, 
-                    run, c1, c2, v_bound).np_run(GBO, local_search)
+                VectorizedBinaryParticleSwarmOptimization(instance, metrics, hp['num_particles'], 
+                    run, hp['c1'], hp['c2'], hp['v_bound']).np_run(hp['GBO'], hp['local_search'])
 
-            metrics_file_prefix = metrics_filename_generator(hyper_params)
+            metrics_file_prefix = metrics_filename_generator(hp)
             
             metrics.write_to_file('metrics-PSO', [metrics], metrics_file_prefix)
 
         
 
 if __name__ == '__main__':
-    # main(instances_directory, opt_directory, sub_directory)
+    main(instances_directory, opt_directory, sub_directory)
 
-    names, instances = get_random_instances('experiment/')
+    # names, instances = get_random_instances('experiment/')
     
-    run_instances(names, instances)
+    # run_instances(names, instances)

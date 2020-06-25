@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from scipy.sparse.csgraph import minimum_spanning_tree
+import pathlib
 
 class MaxCut:
 
@@ -16,6 +17,9 @@ class MaxCut:
         self.edges_list = []
 
         self.length_genotypes = 0
+
+        BASE_PATH = pathlib.Path(__file__).parent.absolute()
+        os.chdir(BASE_PATH)
 
         with open(instances_directory + filename, "r") as f:
             nodes = int(f.readline())
