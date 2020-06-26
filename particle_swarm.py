@@ -50,7 +50,7 @@ class BPSO:
 class VectorizedBinaryParticleSwarmOptimization(BPSO):
 
 
-    def __init__(self, instance, metrics, num_particles, run):
+    def __init__(self, instance, metrics, num_particles, run, c1, c2, v):
         '''
         Initialize the vectorized version of Particle swarm optimization
         
@@ -59,6 +59,9 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
         super().__init__(instance, metrics, run, num_particles)
         # init the get fitness function of the metrics class
         metrics.best_fitness_function = self.get_swarm_best_fitness
+        self.c1 = c1
+        self.c2 = c2
+        self.v = v
 
     def get_swarm_best_fitness(self):
         '''
@@ -69,7 +72,7 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
         return self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]
 
 
-    def np_run(self, GBO=False, local_search=False, norm_velo=False):
+    def np_run(self, GBO=False, local_search=False):
         '''
         SUPER-MEGA-FAST-PSO-RUNNER
 
@@ -110,8 +113,8 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
 
             # Re-calculate swarm velocity
             self.np_swarm_velocity = self.np_swarm_velocity + \
-                np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position - self.np_swarm_position) + \
-                    np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)] - self.np_swarm_position)
+                self.c1 * np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position - self.np_swarm_position) + \
+                    self.c2 * np.einsum('i, ik -> ik', np.random.rand(self.num_particles), self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)] - self.np_swarm_position)
 
             # If gray-box optimization, use bit flip value for velocity.
             if GBO: 
@@ -120,6 +123,9 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
                 self.np_swarm_velocity += np.random.rand(self.num_particles)[:, np.newaxis] * \
                     (bit_flip_vals_norm * (self.np_swarm_position == 0) - \
                         bit_flip_vals_norm * (self.np_swarm_position == 1))
+
+            # Bound velocity by v
+            self.np_swarm_velocity.clip(-self.v, self.v, out=self.np_swarm_velocity)
 
             # Use sigmoid for new position
             self.np_swarm_position = (np.random.rand(self.num_particles, self.length_genotypes) < self.sigmoid(self.np_swarm_velocity)).astype(np.int)
@@ -131,14 +137,14 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
 
             # if local search, perform local search to increase fitness for all position with hamming distance 1
             if local_search and not done:
-                for i in len(self.num_particles):
+                for i in range(self.num_particles):
                     self.np_swarm_position[i], self.np_swarm_fitness[i] = self.local_search_genotype(self.np_swarm_position[i])
                     done = self.update_best_position()
 
-            # if number use velocity normalization every norm_velo epochs.
-            if isinstance(norm_velo, int) and norm_velo is not False:
-                if (epoch + 1) % norm_velo == 0:
-                    self.np_swarm_velocity /= np.max(np.abs(self.np_swarm_velocity), axis=1)[:, np.newaxis]
+            # # if number use velocity normalization every norm_velo epochs.
+            # if isinstance(norm_velo, int) and norm_velo is not False:
+            #     if (epoch + 1) % norm_velo == 0:
+            #         self.np_swarm_velocity /= np.max(np.abs(self.np_swarm_velocity), axis=1)[:, np.newaxis]
 
             if (epoch) % 100 == 0:
                 print(f'Epoch: {epoch} | Best position: {self.np_swarm_best_position[np.argmax(self.np_swarm_best_fitness)]} | Best known fitness: {self.np_swarm_best_fitness[np.argmax(self.np_swarm_best_fitness)]} | No evals: {self.metrics.evaluations}')
@@ -165,7 +171,7 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
     def local_search_genotype(self, genotype):
         '''
         Performes local search algorithm according to EDU PSO MacCut paper
-        
+
         '''
         
         x_best = genotype.copy()
@@ -178,7 +184,7 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
             gains = self.instance.np_calculate_all_bits_flip_value(x, self.metrics, self.run)
             for k in range(np.int(self.length_genotypes/10)):
 
-                g_a = np.argmax(gains[F])
+                g_a = np.where(gains == np.max(gains[F]))[0][0]
                 x[g_a] = x[g_a] == 0
                 F[g_a] = False
                 gains = self.instance.np_calculate_all_bits_flip_value(x, self.metrics, self.run)
@@ -188,7 +194,7 @@ class VectorizedBinaryParticleSwarmOptimization(BPSO):
                     x_best_fit = x_fit
                     flag = True
                 
-                g_b = np.argmax(gains[np.logical_and(F, x == x[g_a])])
+                g_b = np.where(gains == np.max(gains[np.logical_and(F, x == x[g_a])]))[0][0]
                 x[g_b] = x[g_b] == 0
                 F[g_b] = False
                 gains = self.instance.np_calculate_all_bits_flip_value(x, self.metrics, self.run)
