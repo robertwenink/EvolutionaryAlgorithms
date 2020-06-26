@@ -1,0 +1,12 @@
+filename 							 evaluations 	 mean 	 std 	 maxfitness 
+maxcut_random_16_0.4_100_instance_0 	 14507 	 2585.00 	 0.00000 	 2585 
+maxcut_random_32_0.4_100_instance_1 	 24452 	 10027.00 	 0.00000 	 10027 
+maxcut_random_64_0.4_100_instance_2 	 52391 	 40502.00 	 0.00000 	 40502 
+maxcut_random_128_0.4_100_instance_3 	 99866 	 151766.00 	 0.00000 	 151766 
+filename 							 evaluations 	 mean 	 std 	 maxfitness 
+maxcut_random_16_0.4_100_instance_0 	 26086 	 2585.00 	 0.00000 	 2585 
+maxcut_random_32_0.4_100_instance_1 	 46450 	 10027.00 	 0.00000 	 10027 
+maxcut_random_64_0.4_100_instance_2 	 94514 	 40502.00 	 0.00000 	 40502 
+maxcut_random_128_0.4_100_instance_3 	 187438 	 151766.00 	 0.00000 	 151766 
+maxcut_random_256_0.4_100_instance_4 	 401264 	 581195.70 	 218.14676 	 581437 
+maxcut_random_512_0.4_100_instance_5 	 802475 	 2258385.10 	 633.30268 	 2259363 

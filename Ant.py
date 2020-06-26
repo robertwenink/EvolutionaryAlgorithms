@@ -5,12 +5,12 @@ import random
 
 
 class Ant_BBO:
-    def __init__(self,length_genotypes):
-        self.Lg = length_genotypes
-        self.genotype = np.zeros(length_genotypes)
+    def __init__(self,Lg):
+        self.Lg = Lg
+        self.genotype = np.zeros(Lg)
         self.fitness = int(0)
 
-        self.trail = np.zeros(length_genotypes)
+        self.trail = np.zeros(Lg)
 
     def run(self,pdict):
         """
@@ -41,19 +41,18 @@ class Ant_BBO:
         self.genotype = (self.trail < self.Lg).astype('int32') 
 
 
-
 class Ant_GBO:
-    def __init__(self,length_genotypes):
-        self.L = length_genotypes
-        self.genotype = np.zeros(length_genotypes,dtype = np.int32)
+    def __init__(self,Lg):
+        self.Lg = Lg
+        self.genotype = np.zeros(Lg,dtype = np.int32)
         self.fitness = int(0)
         
         # initialize cutvector; initially all in same set, for migrate to other set *-1, X in {-1,1}
-        self.cutVector = self.rand_bin_array(math.ceil(self.L/2),self.L)
+        self.cutVector = np.ones(Lg)
 
         # inits for procedure of getting the changes to switch set membership. 
         self.deltaF = None
-        self.P = np.ones(length_genotypes) 
+        self.P = np.ones(Lg) 
 
     def run(self,edges_dict,ph_dict,alpha,beta,newInit=True):
         """
@@ -119,15 +118,6 @@ class Ant_GBO:
         """
         self.genotype = ((self.cutVector + 1)/2).astype('int32') 
 
-    def rand_bin_array(self,K, L):
-        """
-        K the number of ones
-        L the genotype length
-        """
-        arr = np.zeros(L)
-        arr[:K]  = 1
-        np.random.shuffle(arr)
-        return arr
 
 
 
